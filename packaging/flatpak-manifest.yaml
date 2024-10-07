@@ -1,0 +1,175 @@
+# Run:
+#   $ flatpak-builder build-flatpak packaging/flatpak-manifest.yaml
+# Maybe: --extra-sources=./subprojects/packagecache --install --user --force-clean
+
+app-id: cn.org.yanlab.Gapr
+runtime: org.freedesktop.Platform
+runtime-version: "23.08"
+sdk: org.freedesktop.Sdk
+command: gapr
+
+finish-args:
+  - --share=ipc
+  - --share=network
+  - --socket=x11
+  - --socket=wayland
+  - --socket=pulseaudio
+  - --device=dri
+
+cleanup:
+  - /include
+  - /lib/pkgconfig
+  - /lib/ld-linux-x86-64.so.2
+  - /lib/lib*.a
+
+modules:
+  - name: conda
+    build-options:
+      build-args:
+        - --share=network
+      #strip: false
+      #no-debuginfo: true
+      #no-debuginfo-compression: true
+    #no-python-timestamp-fix: true
+    buildsystem: simple
+    build-commands:
+      - ./micromamba -q -p /var/lib/mamba create
+      - ./micromamba -q -p /var/lib/mamba config set --env channel_alias https://mirrors.tuna.tsinghua.edu.cn/anaconda/cloud/
+      - ./micromamba -q -p /var/lib/mamba install -y -c conda-forge boost-cpp'==1.76.0' lua lmdb gsl qt-main
+      - install -m0644 -D lmdb.pc -t /app/lib/pkgconfig
+      - mv /var/lib/mamba/lib/liblmdb.so /app/lib/
+    sources:
+      - type: archive
+        url: https://api.anaconda.org/download/conda-forge/micromamba/1.4.9/linux-64/micromamba-1.4.9-0.tar.bz2
+        sha256: 34ac1c25616365cec6fdcf691ad91f6de770bcece2b7978c58fd5b3f5db50cd9
+      - type: inline
+        dest-filename: lmdb.pc
+        contents: |
+          prefix=/var/lib/mamba
+          libdir=${prefix}/lib
+          includedir=${prefix}/include
+          Name: lmdb
+          Version: 0.11.2
+          Description: 
+          URL: 
+          Libs: -L${libdir} -llmdb
+          Cflags: -I${includedir}
+
+  - name: webm
+    buildsystem: simple
+    build-commands:
+      - make -f Makefile.unix libwebm.so -j$FLATPAK_BUILDER_N_JOBS
+    post-install:
+      - install -m0644 libwebm.so -D -t /app/lib
+      - install -m0644 *.hpp -D -t /app/include/webm
+      - install -m0644 -D webm.pc -t /app/lib/pkgconfig
+    sources:
+      - type: archive
+        url: https://github.com/webmproject/libwebm/archive/libwebm-1.0.0.27.tar.gz
+        sha256: 1332f43742aeae215fd8df1be6e363e753b17abb37447190e789299fe3edec77
+      - type: inline
+        dest-filename: webm.pc
+        contents: |
+          prefix=/app
+          libdir=${prefix}/lib
+          includedir=${prefix}/include
+          Name: webm
+          Description: 
+          URL: 
+          Version: 0.9.31
+          Libs: -L${libdir} -lwebm
+          Cflags: -I${includedir}/webm
+
+  - name: neutube
+    subdir: neurolabi/c
+    buildsystem: cmake
+    config-opts:
+      - -DUSE_LIBFFTW=OFF
+      - -DCMAKE_BUILD_TYPE=Release
+      - -DCMAKE_C_FLAGS=-fPIC
+      - -DUSE_LIBFFTW=OFF
+      - -DUSE_LIBFFTWF=OFF
+      - -DUSE_LIBJANSSON=OFF
+      - -DUSE_LIBXML2=OFF
+    post-install:
+      - install -m0644 libneurolabi.a -D -t /app/lib
+      - install -m0644 *.h -D -t /app/include/neutube
+      - install -m0644 include/*.h -D -t /app/include/neutube
+      - install -m0644 ../lib/genelib/src/*.h -D -t /app/include/neutube
+      - install -m0644 ../../neutube.pc -D -t /app/lib/pkgconfig
+    sources:
+      - type: archive
+        url: https://github.com/tingzhao/neutube/archive/neutube.zip
+        sha256: da0efd58a452f8a948327c6c941d1a40e1691be9287bcfcccbcd1c6e15fab52a
+      - type: inline
+        dest-filename: neutube.pc
+        contents: |
+          prefix=/app
+          libdir=${prefix}/lib
+          includedir=${prefix}/include
+          Name: neutube
+          Description: 
+          URL: 
+          Version: 0.9.31
+          Libs: -L${libdir} -lneurolabi
+          Cflags: -I${includedir}/neutube
+
+  - name: jctvc-hm
+    buildsystem: simple
+    build-commands:
+      - make "CPP=g++ -fPIC" "CC=gcc -fPIC" "-C" "build/linux" "release_highbitdepth" -j$FLATPAK_BUILDER_N_JOBS
+    post-install:
+      - install -m0644 lib/libTLibDecoderHighBitDepthStatic.a -D -t /app/lib
+      - install -m0644 lib/libTLibCommonHighBitDepthStatic.a -D -t /app/lib
+      - for x in {TLibVideoIO,TLibCommon,TLibDecoder,libmd5}; do
+        install -m0644 source/Lib/"$x"/*.h -D -t /app/include/jctvc/"$x"; done
+      - install -m0644 -D jctvc-hm.pc -t /app/lib/pkgconfig
+    sources:
+      - type: svn
+        url: https://hevc.hhi.fraunhofer.de/svn/svn_HEVCSoftware/tags/HM-16.20/
+      - type: patch
+        path: ../utilities/jctvc-hm-fix.patch
+      - type: inline
+        dest-filename: jctvc-hm.pc
+        contents: |
+          prefix=/app
+          libdir=${prefix}/lib
+          includedir=${prefix}/include
+          Name: jctvc-hm
+          Description: 
+          URL: 
+          Version: 16.20
+          Libs: -L${libdir} -lTLibDecoderHighBitDepthStatic -lTLibCommonHighBitDepthStatic
+          Cflags: -I${includedir}/jctvc
+
+  - name: gapr
+    buildsystem: meson
+    build-options:
+      append-path: /var/lib/mamba/bin
+      prepend-ld-library-path: /usr/lib/x86_64-linux-gnu:/var/lib/mamba/lib
+      append-pkg-config-path: /usr/lib/x86_64-linux-gnu/pkgconfig:/var/lib/mamba/lib/pkgconfig
+      env:
+        BOOST_ROOT: /var/lib/mamba
+        QMAKE: /var/lib/mamba/bin/qmake
+      build-args:
+        - --share=network
+      strip: true
+      no-debuginfo: true
+      #no-debuginfo-compression: true
+    config-opts:
+      - -Dwith-system-libvpx=true
+      - -Dwith-system-libwebm=true
+      - -Denable-hevc=enabled
+      - -Denable-av1=disabled
+      - -Denable-gui=enabled
+      - -Dinstall-type=dist-full
+    post-install:
+    sources:
+      - type: git
+        url: ssh://git@localhost/gapr.git
+        branch: master
+      - type: patch
+        path: flatpak-hotfix.patch
+        use-git: true
+        options:
+          - --allow-empty

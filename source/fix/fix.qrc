@@ -1,0 +1,33 @@
+<!-- vim: set ft=xml : -->
+<!DOCTYPE RCC>
+<RCC version="1.0">
+	<qresource>
+		<file>glsl/vert.vert</file>
+		<file>glsl/edge.pr.vert</file>
+		<file>glsl/mark.vert</file>
+		<file>glsl/sort.vert</file>
+		<file>glsl/mesh.vert</file>
+		<file>glsl/line.vert</file>
+		<file>glsl/edge.vert</file>
+		<file>glsl/volume.vert</file>
+		<file>glsl/edge.geom</file>
+		<file>glsl/edge.pr.geom</file>
+		<file>glsl/line.geom</file>
+		<file>glsl/mark.geom</file>
+		<file>glsl/vert.frag</file>
+		<file>glsl/mark.frag</file>
+		<file>glsl/sort.frag</file>
+		<file>glsl/sort.pr.frag</file>
+		<file>glsl/mesh.frag</file>
+		<file>glsl/line.frag</file>
+		<file>glsl/edge.frag</file>
+		<file>glsl/volume.frag</file>
+		<file>glsl/edge.pr.frag</file>
+		<file>glsl/vert2.vert</file>
+		<file>glsl/vert2.geom</file>
+		<file>glsl/vert2.frag</file>
+		<file>glsl/line2.vert</file>
+		<file>glsl/line2.geom</file>
+		<file>glsl/line2.frag</file>
+	</qresource>
+</RCC>

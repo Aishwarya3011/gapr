@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1">
+		<link rel="icon" href="/favicon.png" type="image/png">
+		<link rel="stylesheet" href="css/bootstrap.min.css">
+		<title>Progress</title>
+	</head>
+	<body>
+		<div class="container">
+			<div id="alert">
+			</div>
+			<table class="table table-striped">
+				<thead class="thead-dark">
+					<tr>
+						<th scope="col">Dataset</th>
+						<th scope="col">Progress</th>
+						<th scope="col">Recent Commits</th>
+						<th scope="col">Total Commits</th>
+					</tr>
+				</thead>
+				<tbody id="list">
+				</tbody>
+			</table>
+		</div>
+
+		<script src="js/jquery-3.2.1.slim.min.js"></script>
+		<script src="js/popper.min.js"></script>
+		<script src="js/bootstrap.min.js"></script>
+		<script>
+			window.addEventListener('DOMContentLoaded', function() {
+				var cb_ok=function(res) {
+					var r=JSON.parse(res);
+					$("#alert").html('<div class="alert alert-info" role="alert">'+r.time+'</div>');
+					var h='';
+					r.stats.forEach(function(stat) {
+						var rat1=(stat.nn-stat.nnr)*100.0/stat.nn;
+						var rat2=(stat.nt-stat.ntr)*100.0/stat.nt;
+						h+='<tr><th scope="row">'+stat.g;
+						if(stat.lp!==undefined)
+							h+=' <span class="badge badge-info">Conv</span>';
+						h+='</th><td><div class="progress" style="height: 12px;"><div class="progress-bar" style="width: ';
+						h+=rat1+'%;">'+stat.nnr+'/'+stat.nn+'</div></div><div class="progress" style="height: 12px;"><div class="progress-bar" style="width: ';
+						h+=rat2+'%;">'+stat.ntr+'/'+stat.nt+'</div></div></td><td>';
+						h+=stat.cd+'/'+stat.cm+'</td><td>';
+						h+=stat.c+'</td></tr>';
+					});
+					$("#list").html(h);
+				};
+				var cb_err=function(e) {
+					$("#alert").html('<div class="alert alert-warning" role="alert">'+e+'</div>');
+				};
+				var xmlHttp=new XMLHttpRequest();
+				xmlHttp.onreadystatechange=function() {
+					if(xmlHttp.readyState===4) {
+						if(xmlHttp.status===200) {
+							cb_ok(xmlHttp.responseText);
+						} else {
+							cb_err("HTTP Error: "+xmlHttp.status);
+						}
+					}
+				};
+				xmlHttp.open("GET", "/api/progress");
+				xmlHttp.send();
+			});
+		</script>
+	</body>
+</html>

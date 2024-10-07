@@ -1,0 +1,6 @@
+[wrap-file]
+directory=libwebm-libwebm-1.0.0.27
+source_url=https://github.com/webmproject/libwebm/archive/libwebm-1.0.0.27.tar.gz
+source_filename=libwebm-1.0.0.27.tar.gz
+source_hash=1332f43742aeae215fd8df1be6e363e753b17abb37447190e789299fe3edec77
+patch_directory=libwebm

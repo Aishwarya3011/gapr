@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <author>GOU Lingfeng</author>
+ <class>gapr::fix::ErrorStateDialog</class>
+ <widget class="QDialog" name="gapr::fix::ErrorStateDialog">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>307</width>
+    <height>317</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Change error state</string>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <property name="sizeConstraint">
+    <enum>QLayout::SetFixedSize</enum>
+   </property>
+   <item>
+    <widget class="QLabel" name="label">
+     <property name="minimumSize">
+      <size>
+       <width>240</width>
+       <height>0</height>
+      </size>
+     </property>
+     <property name="text">
+      <string>&amp;State:</string>
+     </property>
+     <property name="buddy">
+      <cstring>list</cstring>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QListWidget" name="list">
+     <item>
+      <property name="text">
+       <string>Unconfirmed</string>
+      </property>
+      <property name="toolTip">
+       <string>Newly reported error.</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>Invalid</string>
+      </property>
+      <property name="toolTip">
+       <string>Actually not an error.</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>Fixed</string>
+      </property>
+      <property name="toolTip">
+       <string>The reported error is fixed.</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>Won't fix</string>
+      </property>
+      <property name="toolTip">
+       <string>The error is valid, but cannot be fixed.</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>Redundant</string>
+      </property>
+      <property name="toolTip">
+       <string>The error is implied by another error report.</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>Deferred</string>
+      </property>
+      <property name="toolTip">
+       <string>The error is deferred; need more information to resolve.</string>
+      </property>
+     </item>
+    </widget>
+   </item>
+   <item>
+    <widget class="QDialogButtonBox" name="button_box">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+     <property name="standardButtons">
+      <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
+     </property>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

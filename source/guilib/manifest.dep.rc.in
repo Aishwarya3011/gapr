@@ -1,0 +1,5 @@
+#define ISOLATION_AWARE_ENABLED 1
+#include <winuser.h>
+
+CREATEPROCESS_MANIFEST_RESOURCE_ID RT_MANIFEST manifest.dep
+

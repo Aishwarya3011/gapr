@@ -1,0 +1,6 @@
+[wrap-file]
+directory=neutube-neutube
+source_url=https://github.com/tingzhao/neutube/archive/neutube.zip
+source_filename=neutube.zip
+source_hash=da0efd58a452f8a948327c6c941d1a40e1691be9287bcfcccbcd1c6e15fab52a
+patch_directory=neutube

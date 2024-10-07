@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop">
+	<id>@PACKAGE_DOMAIN@.@PACKAGE_NAME@.desktop</id>
+	<name>@PACKAGE_NAME@</name>
+	<!-- <licence>CC0</licence> -->
+	<metadata_license>CC0</metadata_license>
+	<url type="homepage">@PACKAGE_URL@</url>
+	<summary>@PACKAGE_DESCRIPTION@</summary>
+	<description>
+		<p>@PACKAGE_DESCRIPTION@</p>
+	</description>
+	<content_rating type="oars-1.0" />
+	<screenshots>
+		<screenshot type="default">
+			<image>http://yanlab.org.cn/gapr/dl/screenshot1.png</image>
+			<caption>@PACKAGE_NAME@ in action</caption>
+		</screenshot>
+	</screenshots>
+	<releases>
+		<release version="@PACKAGE_VERSION@" timestamp="2023-08-01"></release>
+	</releases>
+</component>

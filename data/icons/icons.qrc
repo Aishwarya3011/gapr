@@ -1,0 +1,21 @@
+<!-- vim: set ft=xml : -->
+<!DOCTYPE RCC>
+<RCC version="1.0">
+	<qresource>
+		<file>images/ext-link.svg</file>
+	</qresource>
+	<qresource prefix="/icons/hicolor">
+		<file>index.theme</file>
+		<file>16x16/apps/app-icon.svg</file>
+		<file>32x32/apps/app-icon.svg</file>
+		<file>64x64/apps/app-icon.svg</file>
+		<file>scalable/apps/app-icon.svg</file>
+		<file>32x32/actions/tracing-connect.svg</file>
+		<file>32x32/actions/tracing-extend.svg</file>
+		<file>32x32/actions/goto-target.svg</file>
+		<file>32x32/actions/pick-current.svg</file>
+		<file>32x32/actions/goto-position.svg</file>
+		<file>32x32/actions/tracing-branch.svg</file>
+		<file>32x32/actions/tracing-end.svg</file>
+	</qresource>
+</RCC>

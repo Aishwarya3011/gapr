@@ -1,0 +1,13 @@
+/compile_commands.json
+
+/subprojects/*/
+!/subprojects/*.wrap
+!/subprojects/packagefiles/
+
+/android/.gradle/
+/android/.idea/
+/android/local.properties
+/android/proofread/build/
+/android/proofread/.cxx/
+
+/.cache/

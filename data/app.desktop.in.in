@@ -1,0 +1,21 @@
+[Desktop Entry]
+Version=1.0
+Name=@PACKAGE_NAME@
+Comment=@PACKAGE_DESCRIPTION@
+Exec=gapr
+Icon=@PACKAGE_DOMAIN@.@PACKAGE_NAME@
+Terminal=false
+Type=Application
+StartupNotify=true
+Categories=DataVisualization;ImageProcessing;Biology;MedicalSoftware
+Keywords=neurite;reconstruction;tracing;
+Actions=fix;proofread;
+
+[Desktop Action fix]
+Name=Fix
+Exec=gapr-fix
+
+[Desktop Action proofread]
+Name=Proofread
+Exec=gapr-proofread
+

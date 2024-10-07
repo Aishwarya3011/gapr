@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gresources>
+	<gresource prefix="/cn/org/yanlab/Gapr">
+		<file alias="gtk/menus.ui" preprocess="xml-stripblanks">ui/menus.ui</file>
+		<file alias="gtk/help-overlay.ui" preprocess="xml-stripblanks">ui/help-overlay.ui</file>
+		<file preprocess="xml-stripblanks">ui/window.ui</file>
+		<file compressed="true">glsl/edge.vert</file>
+		<file compressed="true">glsl/edge.geom</file>
+		<file compressed="true">glsl/edge.frag</file>
+		<file compressed="true">glsl/vert.vert</file>
+		<file compressed="true">glsl/vert.geom</file>
+		<file compressed="true">glsl/vert.frag</file>
+		<file compressed="true">glsl/volume.vert</file>
+		<file compressed="true">glsl/volume.frag</file>
+		<file compressed="true">glsl/mesh.vert</file>
+		<file compressed="true">glsl/mesh.frag</file>
+		<file compressed="true">glsl/sort.vert</file>
+		<file compressed="true">glsl/sort.frag</file>
+		<file alias="style.css">ui/style.css</file>
+	</gresource>
+</gresources>

@@ -1,0 +1,123 @@
+= COPYING =
+
+== Gapr
+
+Gapr is licenced under GPLv3.
+
+----
+include::LICENSE.gplv3[]
+----
+
+== Third-party packages
+
+- Glibc, Libgomp and Libstdc++
++
+----
+include::LICENSE.lgplv2.1[]
+----
+
+- Zlib
++
+----
+include::LICENSE.zlib[]
+----
+
+- Boost <http://www.boost.org>
++
+----
+include::LICENSE.boost[]
+----
+
+- CURL from Daniel Stenberg <daniel@haxx.se>
++
+----
+include::LICENSE.curl[]
+----
+
+- OpenSSL <http://www.openssl.org/>
++
+----
+include::LICENSE.openssl[]
+----
+
+- Lua
++
+----
+include::LICENSE.mit[]
+----
+
+- LMDB
++
+----
+include::LICENSE.oldap2.8[]
+----
+
+- TIFF library
++
+----
+include::LICENSE.libtiff[]
+----
+
+- Libwebm
++
+----
+include::LICENSE.libwebm[]
+----
+
+- Libvpx
++
+----
+include::LICENSE.vpx[]
+----
+
+- HM from ITU/ISO/IEC
++
+----
+include::LICENSE.hm[]
+----
+
+- neuTube
+----
+include::LICENSE.neutube[]
+include::LICENSE.neutube2[]
+----
+
+- GSL from GNU Scientific Library <http://www.gnu.org/software/gsl/>
++
+----
+include::LICENSE.gplv3[]
+----
+
+- GTK+ 3 from the GNOME Project <http://www.gnome.org/>
++
+----
+include::LICENSE.lgplv2[]
+----
+
+- Qt 5 from the Qt Project <http://qt-project.org/>
++
+----
+include::LICENSE.lgplv3[]
+----
+
+- Adwaita icon theme form the GNOME Project <http://www.gnome.org/>
++
+----
+COPYING_CCBYSA3.adwaita
+----
+
+- jQuery from JS Foundation and other contributors <http://jquery.org/>;
+Poppler from Federico Zivolo;
+Bootstrap from The Bootstrap Authors <https://github.com/twbs/bootstrap/graphs/contributors>;
+Font Awesome from Font Awesome <https://fontawesome.com/>.
++
+----
+include::LICENSE.mit[]
+----
+
+- Font Awesome from Font Awesome <https://fontawesome.com/>
++
+----
+include::LICENSE.ofl[]
+----
+

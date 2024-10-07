@@ -1,0 +1,102 @@
+ Highlight loop
+================
+
+In *fix* module:
+
+  - View/`Highlight loop`, highlight the loop identified by target position.
+    If no target position or target position is not on a loop, highlight
+    a randomly picked loop. (not really random, just no specific order)
+  - View/`Reset highlight`, clear the highlight and show everything.
+
+In highlight mode, editing operations are disabled, to avoid making changes
+that are inconsistent with the invisible part.
+To edit, exit highlight mode with `Reset highlight`.
+
+Only loops that are part of a neuron are considered.
+When there's no loop, highlight mode does nothing; but one still has to exit
+highlight mode to edit.
+
+ Intro
+=======
+The *show* module visualizes tracing results, which consist of:
+
+  - nodes (identified by node id)
+  - links (connection between 2 nodes, identified by a pair of node ids)
+  - node properties (position, radius, type, proofreading status, annotations)
+
+About annotations:
+
+  - root=Abc, the node is the root node (at soma) of a neuron named Abc.
+  - state=end, terminal node, one can confirm that image signal ends here.
+  - state=Tangle, cannot continue tracing, due to two fibers twisted together.
+  - state=Bad end, cannot continue tracing, due to weak image signal.
+  - state=Not resolvable, cannot continue tracing, due to strange signal.
+  - state=Uncertain branch, cannot continue tracing, multiple connection choices (but not a branching point).
+  - state=, cannot continue tracing, unknown error.
+  - error=, may contain tracing error. Currently errors are not categorized.
+
+`state` annotations make sense only at terminal nodes.
+The current categorization of terminal states is not well defined,
+just distinguish between `state=end` (no error) and others (error).
+
+ Prepare
+=========
+
+# create and enter a work directory
+mkdir tmp
+cd tmp 
+
+# download flatpak
+curl http://yanlab.org.cn/blah/priv/Gapr-0.1.1.78.flatpak -OL
+# install flatpak
+flatpak install --user --no-deps ./Gapr-0.1.1.78.flatpak
+
+# export newest tracing result
+flatpak run --filesystem=`pwd` --command=gapr-export cn.org.yanlab.Gapr root@yanlab.org.cn:30003/fmost18133 ./fmost18133.swc
+
+# export tracing result before 2nd round of proofreading
+flatpak run --filesystem=`pwd` --command=gapr-export cn.org.yanlab.Gapr root@yanlab.org.cn:30003/fmost18133 -n 377080 ./fmost18133.prev.swc
+
+# visualize the difference
+flatpak run --filesystem=`pwd` --command=gapr-show cn.org.yanlab.Gapr -d ./fmost18133.prev.swc -i http://yanlab.org.cn/blah/priv/fmost18133 ./fmost18133.swc
+
+ How to
+========
+
+Mouse and keyboard:
+
+ - scroll mouse wheel: zoom in/out.
+ - left click: select node
+ - left drag: rotate
+ - left click while pressing Shift: select node and jump to selected node
+ - left drag while pressing Shift: pan
+ - middle drag: zoom in/out
+
+Hide: hide/show graph
+Refresh: load image
+
+Common links in both versions are displayed as grey lines; links in previous version (deleted links), red; links in current version (new links), green.
+Common nodes, that are not changed (node properties) and are linked, are not displayed.
+Changed common nodes are displayed as yellow dots; unchanged, gray; nodes in previous version (deleted nodes), red; nodes in current version (new nodes), green.
+
+Select a node, and top-left corner shows node properties:
+
+  - @NODE_ID, color denotes node status (deleted/added/common unchanged/common changed)
+  - `pr` means this node has been proofread
+  - (X, Y, Z) and `t`, `r`: position, type and radius.
+  - /ID, linked to another node, color denotes link status (deleted/added/common).
+  - @KEY=VAL, annotations
+
+If the selected node is a changed node, an extra section is displayed:
+
+  - (DX, DY, DZ), position delta.
+  - `t`, `r`: type and radius in previous version.
+  - @KEY=VAL, annotations in previous version.
+
+ Todo
+======
+
+Do Q.C. with differences between 2 versions highlighted.
+Assess the improvement made by the 2nd round of proofreading.
+Check if the changes (red, deletions; green, additions; yellow, modifications) are actually improvements, or at least not destructive.
+

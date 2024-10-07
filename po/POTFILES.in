@@ -1,0 +1,5 @@
+data/app.appdata.xml.in
+data/app.desktop.in.in
+source/show/ui/help-overlay.ui
+source/show/ui/menus.ui
+source/show/ui/window.ui

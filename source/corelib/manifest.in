@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<assembly xmlns="urn:schemas-microsoft-com:asm.v1" manifestVersion="1.0">
+	<assemblyIdentity
+		name="lib@CORELIB_NAME@-@CORELIB_VER@"
+		version="1.0.0.0"
+		processorArchitecture="ia64"
+		type="win32"
+		/>
+	<file name="lib@CORELIB_NAME@-@CORELIB_VER@.dll" hashalg="SHA1"/>
+	<file name="lib@CORELIB_NAME@-boost-asio-@CORELIB_ASIO_VER@.dll" hashalg="SHA1"/>
+</assembly>

@@ -1,0 +1,30 @@
+<resources>
+    <string name="app_name">Gapr</string>
+    <string name="act_proofread">Gapr Proofread</string>
+    <string name="welcome_to_gapr">Welcome to gapr.</string>
+    <string name="start">Start</string>
+    <string name="error">Error</string>
+    <string name="copyright_short">© 2018-2022 GOU Lingfeng, <a href="http://www.yanlab.org.cn/">Yan Lab.</a></string>
+    <string name="username">Username</string>
+    <string name="password">Password</string>
+    <string name="login">Login</string>
+    <string name="repository">Repository</string>
+    <string name="rotate">Rotate</string>
+    <string name="report_error">Report</string>
+    <string name="end_as">End as</string>
+    <string name="jump_to">Jump to</string>
+    <string name="extend">Extend</string>
+    <string name="connect">Connect</string>
+    <string name="contrast">Contrast</string>
+    <string name="delete">Delete</string>
+    <string name="data_only">Data only</string>
+    <string name="proofread">Proofread</string>
+    <string name="zoom">Zoom</string>
+    <string name="cursor">Cursor</string>
+    <string name="branch">Branch</string>
+    <string name="skip">Skip</string>
+    <string name="end">End</string>
+    <string name="add_neuron">Add nrn.</string>
+    <string name="network_usage_notice">Downloading not optimized in this version.\nWatch out for network usage when WIFI is not present.</string>
+    <string name="contrast_min">Contrast\nMin.</string>
+</resources>

@@ -1,0 +1,24 @@
+option('with-system-boost', type: 'boolean', value: true,
+  description: 'Build with system Boost.')
+option('debug-asio', type: 'boolean', value: false,
+  description: 'Enable Boost.Asio debugging.')
+option('enable-vp9', type: 'feature', value: 'enabled',
+  description: 'Enable VP9 support.')
+option('enable-av1', type: 'feature', value: 'disabled',
+  description: 'Enable AV1 support.')
+option('with-system-libvpx', type: 'boolean', value: false,
+  description: 'Build with system libvpx.')
+option('with-system-libwebm', type: 'boolean', value: false,
+  description: 'Build with system libwebm.')
+option('enable-hevc', type: 'feature', value: 'enabled',
+  description: 'Enable HEVC support.')
+option('enable-gui', type: 'feature', value: 'enabled',
+  description: 'Enable Qt5 GUI support.')
+option('with-torch', type: 'feature', value: 'disabled',
+  description: 'Use Torch and enable dependent features.')
+option('torch-prefix', type: 'string',
+  description: 'Prefix path of libtorch.')
+option('install-type', type: 'combo', value: 'system',
+  choices: ['system', 'dist-full', 'dist-lite'],
+  description: 'Installation type.')
+

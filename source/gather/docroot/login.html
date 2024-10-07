@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1">
+		<link rel="icon" href="/favicon.png" type="image/png">
+		<link rel="stylesheet" href="css/bootstrap.min.css">
+		<title>Login</title>
+	</head>
+	<body>
+		<ul class="nav justify-content-end">
+			<li class="nav-item">
+				<a class="nav-link active" href="#">Login</a>
+			</li>
+			<li class="nav-item">
+				<a class="nav-link" href="/register.html">Register</a>
+			</li>
+		</ul>
+		<div class="container">
+			<h4>Login</h4>
+			<form>
+				<div class="form-group">
+					<label for="username">Username</label>
+					<input type="text" class="form-control" id="username" aria-describedby="usernameHelp" placeholder="Enter username">
+				</div>
+				<div class="form-group">
+					<label for="password">Password</label>
+					<input type="password" class="form-control" id="password" placeholder="Password">
+				</div>
+				<button type="button" class="btn btn-primary" id="submit">Submit</button>
+			</form>
+			<div id="alert">
+			</div>
+		</div>
+
+		<script src="js/jquery-3.2.1.slim.min.js"></script>
+		<script src="js/popper.min.js"></script>
+		<script src="js/bootstrap.min.js"></script>
+		<script>
+$("#submit").on("click", function() {
+	var busy=false;
+	var info_elem=$("#alert");
+	var user_elem=$("#username");
+	var pass_elem=$("#password");
+	var show_msg=function(sty, msg) {
+		info_elem.html('<div class="alert alert-'+sty+'" role="alert">'+msg+'</div>');
+	};
+	return function() {
+		if(busy)
+			return;
+		var username=user_elem.val();
+		if(username==="") {
+			return show_msg('warning', "Empty username");
+		}
+		var password=pass_elem.val();
+		if(password.length<3) {
+			return show_msg('warning', "Password too short");
+		}
+		busy=true;
+		show_msg('info', "Login...");
+		var xmlHttp=new XMLHttpRequest();
+		xmlHttp.onreadystatechange=function() {
+			if(xmlHttp.readyState===4) {
+				if(xmlHttp.status===200) {
+					var r=JSON.parse(xmlHttp.responseText);
+					show_msg('info', "Success!");
+					window.location.href="/";
+				} else {
+					show_msg('warning', "Error: "+xmlHttp.statusText);
+				}
+				busy=false;
+			}
+		};
+		xmlHttp.open("POST", "/api/login");
+		xmlHttp.send(username+':'+password);
+	};
+}());
+		</script>
+	</body>
+</html>

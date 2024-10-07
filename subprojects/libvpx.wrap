@@ -1,0 +1,6 @@
+[wrap-file]
+directory=libvpx-1.13.1
+source_url=https://github.com/webmproject/libvpx/archive/v1.13.1.tar.gz
+source_filename=libvpx-v1.13.1.tar.gz
+source_hash=00dae80465567272abd077f59355f95ac91d7809a2d3006f9ace2637dd429d14
+patch_directory=libvpx

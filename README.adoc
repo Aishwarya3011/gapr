@@ -1,0 +1,57 @@
+= Gapr =
+
+Gapr accelerates projectome reconstruction.
+
+[horizontal]
+Author::  GOU Lingfeng <goulf.3m@gmail.com>
+Website:: http://yanlab.org.cn/gapr/
+License:: GPLv3
+
+== Installation
+
+[source,shell]
+----
+##flatpak remote-add --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
+flatpak install [--user] Gapr-%VERSION%.flatpak
+flatpak run cn.org.yanlab.Gapr
+----
+
+For Windows and macOS packages, simply launch the installer and follow the instructions.
+
+== Build from source
+
+=== Fedora 39
+
+Install the GCC C++ compiler, Meson, Ninja, and dependent libraries.
+Errors during configuration will show the libraries not available.
+
+[source,shell]
+----
+unzip gapr-1.1.zip
+cd gapr/
+mkdir build
+cd build/
+# configure
+meson ..
+# build
+ninja
+----
+
+Some build errors can be solved by running Ninja again.
+
+=== Other OS
+
+Currently Gapr supports:
+
+* compiling under GNU/Linux;
+* cross-compiling Windows bainaries with the MinGW64 toolchain under Fedora;
+* compiling under macOS with the help of the Brew package manager providing dependencies;
+* compiling under Windows with MSYS and the MinGW64 toolchain;
+* building the Android App with Android Studio.
+
+Please use Meson instead of CMake.
+
+== Usage
+
+Please refer to the online manual (at http://yanlab.org.cn/gapr/) for help.
+

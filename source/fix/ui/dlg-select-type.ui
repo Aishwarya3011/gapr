@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <author>GOU Lingfeng</author>
+ <class>gapr::fix::SelectTypeDialog</class>
+ <widget class="QDialog" name="gapr::fix::SelectTypeDialog">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>307</width>
+    <height>317</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Select type</string>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <property name="sizeConstraint">
+    <enum>QLayout::SetFixedSize</enum>
+   </property>
+   <item>
+    <widget class="QLabel" name="label">
+     <property name="minimumSize">
+      <size>
+       <width>240</width>
+       <height>0</height>
+      </size>
+     </property>
+     <property name="text">
+      <string>&amp;Type:</string>
+     </property>
+     <property name="buddy">
+      <cstring>type</cstring>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QSpinBox" name="type">
+     <property name="wrapping">
+      <bool>true</bool>
+     </property>
+     <property name="buttonSymbols">
+      <enum>QAbstractSpinBox::UpDownArrows</enum>
+     </property>
+     <property name="specialValueText">
+      <string>Undefined</string>
+     </property>
+     <property name="maximum">
+      <number>15</number>
+     </property>
+     <property name="singleStep">
+      <number>1</number>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QListWidget" name="listWidget">
+     <item>
+      <property name="text">
+       <string>Undefined</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>Soma</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>Axon</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>Dendrite</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>Apical dendrite</string>
+      </property>
+     </item>
+    </widget>
+   </item>
+   <item>
+    <widget class="QDialogButtonBox" name="button_box">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+     <property name="standardButtons">
+      <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
+     </property>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

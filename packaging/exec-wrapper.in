@@ -1,0 +1,6 @@
+#!/bin/bash
+
+macos_dir=$(dirname "$0")
+bindir=$(cd "$macos_dir/../..@PACKAGE_BINDIR@"; pwd)
+
+exec "$bindir/@PACKAGE_EXEC@" "$@"

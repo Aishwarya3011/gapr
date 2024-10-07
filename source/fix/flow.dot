@@ -1,0 +1,49 @@
+digraph {
+	init_window[xlabel="fast sync; 1 shot; fail: die;"];
+	init_window->init_opengl[xlabel="fast sync; 1 shot; fail: die;"];
+	init_opengl->resolve_host[xlabel="fast async; 1 shot; fail: die;"];
+	resolve_host->connect[xlabel="fast async; fail: retry;"];
+	connect->handshake[xlabel="fast async; fail: retry;"];
+	handshake->login[xlabel="fast async; fail: retry;"];
+	login->select[xlabel="fast async; fail: retry;"];
+//
+//
+	select->fetch_catalog[xlabel="fast async; 1 shot; fail: die;"];
+	fetch_catalog->load_tracing[xlabel="slow sync; 1 shot; fail: ignore;"];
+}
+/*
+digraph {
+	legend1[label="die on error", shape=box];
+	legend2[label="re-try, with new connection, on error", shape=oval];
+
+	canvas
+		cube
+		edges
+		model
+		connection
+
+		window_creation[shape=box];
+	viewer_ready[shape=box];
+
+	resolve[shape=box];
+	get_passwd[shape=box];
+	//
+	{
+		////////////
+		/////
+
+		//?. S N R fetch imaging data
+		//?. S N R sync tracing data
+		/////
+sel(**acl/**code/**info) commit(**acl)
+	}
+
+	read_data_info[];
+
+
+	connect->handshake->login->select->upload;
+	read->conv->upload;
+	upload->read[label="succ, next file"];
+	login->get_passwd[label="wrong passwd"];
+}
+*/

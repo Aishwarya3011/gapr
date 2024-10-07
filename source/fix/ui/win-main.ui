@@ -1,0 +1,1067 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <author>GOU Lingfeng</author>
+ <class>gapr::fix::Window</class>
+ <widget class="QMainWindow" name="gapr::fix::Window">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>800</width>
+    <height>600</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Fix</string>
+  </property>
+  <widget class="QSplitter" name="splitter">
+   <property name="sizePolicy">
+    <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+     <horstretch>0</horstretch>
+     <verstretch>0</verstretch>
+    </sizepolicy>
+   </property>
+   <property name="orientation">
+    <enum>Qt::Horizontal</enum>
+   </property>
+   <property name="childrenCollapsible">
+    <bool>false</bool>
+   </property>
+   <widget class="gapr::fix::Canvas" name="canvas">
+    <property name="sizePolicy">
+     <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+      <horstretch>1</horstretch>
+      <verstretch>1</verstretch>
+     </sizepolicy>
+    </property>
+    <property name="minimumSize">
+     <size>
+      <width>480</width>
+      <height>360</height>
+     </size>
+    </property>
+    <property name="contextMenuPolicy">
+     <enum>Qt::CustomContextMenu</enum>
+    </property>
+   </widget>
+   <widget class="QWidget" name="sidebar" native="true">
+    <property name="sizePolicy">
+     <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+      <horstretch>0</horstretch>
+      <verstretch>1</verstretch>
+     </sizepolicy>
+    </property>
+    <property name="minimumSize">
+     <size>
+      <width>160</width>
+      <height>0</height>
+     </size>
+    </property>
+    <layout class="QVBoxLayout" name="verticalLayout">
+     <item>
+      <widget class="QLabel" name="label_3">
+       <property name="text">
+        <string>&amp;Contrast:</string>
+       </property>
+       <property name="buddy">
+        <cstring>xfunc_slave</cstring>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="gapr::range_widget_slave" name="xfunc_slave" native="true">
+       <property name="minimumSize">
+        <size>
+         <width>16</width>
+         <height>16</height>
+        </size>
+       </property>
+       <property name="toolTip">
+        <string>Adjust contrast.</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QLabel" name="label_32">
+       <property name="text">
+        <string>&amp;Neurons:</string>
+       </property>
+       <property name="buddy">
+        <cstring>list_view</cstring>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QListView" name="list_view">
+       <property name="contextMenuPolicy">
+        <enum>Qt::CustomContextMenu</enum>
+       </property>
+       <property name="editTriggers">
+        <set>QAbstractItemView::NoEditTriggers</set>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </widget>
+  </widget>
+  <widget class="QMenuBar" name="menubar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>800</width>
+     <height>29</height>
+    </rect>
+   </property>
+   <widget class="QMenu" name="menu_file">
+    <property name="title">
+     <string>&amp;File</string>
+    </property>
+    <addaction name="file_open"/>
+    <addaction name="file_props"/>
+    <addaction name="file_close"/>
+    <addaction name="separator"/>
+    <addaction name="file_launch"/>
+    <addaction name="file_options"/>
+    <addaction name="file_quit"/>
+   </widget>
+   <widget class="QMenu" name="menu_edit">
+    <property name="title">
+     <string>&amp;Edit</string>
+    </property>
+    <addaction name="goto_target"/>
+    <addaction name="pick_current"/>
+    <addaction name="goto_position"/>
+    <addaction name="separator"/>
+    <addaction name="next_error"/>
+    <addaction name="clear_state"/>
+    <addaction name="resolve_error"/>
+    <addaction name="report_error"/>
+    <addaction name="separator"/>
+    <addaction name="raise_node"/>
+    <addaction name="separator"/>
+    <addaction name="select_noise"/>
+    <addaction name="autosel_length"/>
+   </widget>
+   <widget class="QMenu" name="menu_neuron">
+    <property name="title">
+     <string>&amp;Neuron</string>
+    </property>
+    <addaction name="neuron_create"/>
+    <addaction name="neuron_rename"/>
+    <addaction name="neuron_remove"/>
+   </widget>
+   <widget class="QMenu" name="menu_tracing">
+    <property name="title">
+     <string>&amp;Tracing</string>
+    </property>
+    <addaction name="tracing_connect"/>
+    <addaction name="separator"/>
+    <addaction name="tracing_extend"/>
+    <addaction name="tracing_branch"/>
+    <addaction name="tracing_attach"/>
+    <addaction name="separator"/>
+    <addaction name="tracing_end"/>
+    <addaction name="tracing_end_as"/>
+    <addaction name="separator"/>
+    <addaction name="act_rec_mark1"/>
+    <addaction name="act_rec_mark0"/>
+    <addaction name="separator"/>
+    <addaction name="tracing_delete"/>
+    <addaction name="separator"/>
+    <addaction name="tracing_examine"/>
+   </widget>
+   <widget class="QMenu" name="menu_view">
+    <property name="title">
+     <string>&amp;View</string>
+    </property>
+    <addaction name="view_refresh"/>
+    <addaction name="view_slice"/>
+    <addaction name="view_data_only"/>
+    <addaction name="separator"/>
+    <addaction name="view_hl_loop"/>
+    <addaction name="view_hl_upstream"/>
+    <addaction name="view_hl_downstream"/>
+    <addaction name="view_hl_neuron"/>
+    <addaction name="view_hl_orphan"/>
+    <addaction name="view_hl_raised"/>
+    <addaction name="view_hl_reset"/>
+    <addaction name="separator"/>
+    <addaction name="view_global"/>
+    <addaction name="view_closeup"/>
+    <addaction name="view_mixed"/>
+    <addaction name="separator"/>
+    <addaction name="view_channels"/>
+    <addaction name="view_quality"/>
+   </widget>
+   <widget class="QMenu" name="menu_tools">
+    <property name="title">
+     <string>&amp;Tools</string>
+    </property>
+    <addaction name="tools_save_img"/>
+   </widget>
+   <widget class="QMenu" name="menu_help">
+    <property name="title">
+     <string>&amp;Help</string>
+    </property>
+    <addaction name="help_manual"/>
+    <addaction name="help_about"/>
+   </widget>
+   <addaction name="menu_file"/>
+   <addaction name="menu_edit"/>
+   <addaction name="menu_neuron"/>
+   <addaction name="menu_tracing"/>
+   <addaction name="menu_view"/>
+   <addaction name="menu_tools"/>
+   <addaction name="menu_help"/>
+  </widget>
+  <widget class="QStatusBar" name="statusbar"/>
+  <widget class="QToolBar" name="toolbar">
+   <property name="windowTitle">
+    <string>Tool Bar</string>
+   </property>
+   <attribute name="toolBarArea">
+    <enum>TopToolBarArea</enum>
+   </attribute>
+   <attribute name="toolBarBreak">
+    <bool>false</bool>
+   </attribute>
+   <addaction name="file_props"/>
+   <addaction name="separator"/>
+   <addaction name="view_refresh"/>
+   <addaction name="separator"/>
+   <addaction name="tracing_connect"/>
+   <addaction name="tracing_extend"/>
+   <addaction name="tracing_branch"/>
+   <addaction name="tracing_end"/>
+  </widget>
+  <action name="file_open">
+   <property name="icon">
+    <iconset theme="document-open-symbolic">
+     <normaloff>.</normaloff>.</iconset>
+   </property>
+   <property name="text">
+    <string>&amp;Open...</string>
+   </property>
+   <property name="toolTip">
+    <string>Connect to a tracing repository.</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+O</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::NoRole</enum>
+   </property>
+  </action>
+  <action name="file_props">
+   <property name="icon">
+    <iconset theme="document-properties-symbolic">
+     <normaloff>.</normaloff>.</iconset>
+   </property>
+   <property name="text">
+    <string>&amp;Properties...</string>
+   </property>
+   <property name="toolTip">
+    <string>Show connection and repository information.</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+P</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::NoRole</enum>
+   </property>
+  </action>
+  <action name="file_close">
+   <property name="icon">
+    <iconset theme="window-close-symbolic">
+     <normaloff>.</normaloff>.</iconset>
+   </property>
+   <property name="text">
+    <string>&amp;Close</string>
+   </property>
+   <property name="toolTip">
+    <string>Close the current repository.</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+W</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::NoRole</enum>
+   </property>
+  </action>
+  <action name="file_launch">
+   <property name="icon">
+    <iconset theme="system-run-symbolic">
+     <normaloff>.</normaloff>.</iconset>
+   </property>
+   <property name="text">
+    <string>&amp;Launch...</string>
+   </property>
+   <property name="toolTip">
+    <string>Show launch dialog.</string>
+   </property>
+   <property name="shortcut">
+    <string>F5</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::ApplicationSpecificRole</enum>
+   </property>
+  </action>
+  <action name="file_options">
+   <property name="icon">
+    <iconset theme="configure-symbolic">
+     <normaloff>.</normaloff>.</iconset>
+   </property>
+   <property name="text">
+    <string>&amp;Options...</string>
+   </property>
+   <property name="toolTip">
+    <string>Show the Options dialog to change various settings.</string>
+   </property>
+   <property name="shortcut">
+    <string/>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::PreferencesRole</enum>
+   </property>
+  </action>
+  <action name="file_quit">
+   <property name="icon">
+    <iconset theme="application-exit-symbolic">
+     <normaloff>.</normaloff>.</iconset>
+   </property>
+   <property name="text">
+    <string>&amp;Quit</string>
+   </property>
+   <property name="toolTip">
+    <string>Quit this application.</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+Q</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::QuitRole</enum>
+   </property>
+  </action>
+  <action name="goto_target">
+   <property name="icon">
+    <iconset theme="goto-target">
+     <normaloff>.</normaloff>.</iconset>
+   </property>
+   <property name="text">
+    <string>Goto &amp;target</string>
+   </property>
+   <property name="toolTip">
+    <string>Jump to the target position.</string>
+   </property>
+   <property name="shortcut">
+    <string>G, G</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::NoRole</enum>
+   </property>
+  </action>
+  <action name="pick_current">
+   <property name="icon">
+    <iconset theme="pick-current">
+     <normaloff>.</normaloff>.</iconset>
+   </property>
+   <property name="text">
+    <string>&amp;Pick current</string>
+   </property>
+   <property name="toolTip">
+    <string>Pick the current position.</string>
+   </property>
+   <property name="shortcut">
+    <string>G, C</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::NoRole</enum>
+   </property>
+  </action>
+  <action name="goto_position">
+   <property name="icon">
+    <iconset theme="goto-position">
+     <normaloff>.</normaloff>.</iconset>
+   </property>
+   <property name="text">
+    <string>&amp;Goto position...</string>
+   </property>
+   <property name="toolTip">
+    <string>Jump to a given position.</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+G</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::NoRole</enum>
+   </property>
+  </action>
+  <action name="next_error">
+   <property name="icon">
+    <iconset theme="goto-next-error">
+     <normaloff>.</normaloff>.</iconset>
+   </property>
+   <property name="text">
+    <string>Goto next &amp;error</string>
+   </property>
+   <property name="toolTip">
+    <string>Jump to next unresolved error.</string>
+   </property>
+   <property name="shortcut">
+    <string>G, E</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::NoRole</enum>
+   </property>
+  </action>
+  <action name="clear_state">
+   <property name="icon">
+    <iconset theme="clear-end-state">
+     <normaloff>.</normaloff>.</iconset>
+   </property>
+   <property name="text">
+    <string>Clear end &amp;state</string>
+   </property>
+   <property name="toolTip">
+    <string>Clear end state at target position.</string>
+   </property>
+   <property name="shortcut">
+    <string>X, E</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::NoRole</enum>
+   </property>
+  </action>
+  <action name="resolve_error">
+   <property name="icon">
+    <iconset theme="resolve-error">
+     <normaloff>.</normaloff>.</iconset>
+   </property>
+   <property name="text">
+    <string>&amp;Resolve error...</string>
+   </property>
+   <property name="toolTip">
+    <string>Resolve the error at target position.</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+R</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::NoRole</enum>
+   </property>
+  </action>
+  <action name="report_error">
+   <property name="icon">
+    <iconset theme="report-error">
+     <normaloff>.</normaloff>.</iconset>
+   </property>
+   <property name="text">
+    <string>Re&amp;port error...</string>
+   </property>
+   <property name="toolTip">
+    <string>Report a new error.</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+E</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::NoRole</enum>
+   </property>
+  </action>
+  <action name="raise_node">
+   <property name="icon">
+    <iconset theme="raise-node">
+     <normaloff>.</normaloff>.</iconset>
+   </property>
+   <property name="text">
+    <string>R&amp;aise node</string>
+   </property>
+   <property name="toolTip">
+    <string>Raise target node for selected reconstruction.</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+U</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::NoRole</enum>
+   </property>
+  </action>
+  <action name="select_noise">
+   <property name="icon">
+    <iconset theme="select-noise">
+     <normaloff>.</normaloff>.</iconset>
+   </property>
+   <property name="text">
+    <string>Select &amp;noise...</string>
+   </property>
+   <property name="toolTip">
+    <string>Select false positive edges.</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+Shift+N</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::NoRole</enum>
+   </property>
+  </action>
+  <action name="autosel_length">
+   <property name="icon">
+    <iconset theme="autosel-length">
+     <normaloff>.</normaloff>.</iconset>
+   </property>
+   <property name="text">
+    <string>&amp;Length for automatic selection...</string>
+   </property>
+   <property name="toolTip">
+    <string>.</string>
+   </property>
+   <property name="shortcut">
+    <string></string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::NoRole</enum>
+   </property>
+  </action>
+  <action name="neuron_create">
+   <property name="icon">
+    <iconset theme="list-add-symbolic">
+     <normaloff>.</normaloff>.</iconset>
+   </property>
+   <property name="text">
+    <string>&amp;Create...</string>
+   </property>
+   <property name="toolTip">
+    <string>Create a new neuron with soma at the target position.</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+Shift+N</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::NoRole</enum>
+   </property>
+  </action>
+  <action name="neuron_rename">
+   <property name="icon">
+    <iconset theme="edit-rename-symbolic">
+     <normaloff>.</normaloff>.</iconset>
+   </property>
+   <property name="text">
+    <string>Re&amp;name...</string>
+   </property>
+   <property name="toolTip">
+    <string>Rename the selected neuron.</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+Shift+R</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::NoRole</enum>
+   </property>
+  </action>
+  <action name="neuron_remove">
+   <property name="icon">
+    <iconset theme="list-remove-symbolic">
+     <normaloff>.</normaloff>.</iconset>
+   </property>
+   <property name="text">
+    <string>&amp;Remove</string>
+   </property>
+   <property name="toolTip">
+    <string>Remove the selected neuron.</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+Shift+X</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::NoRole</enum>
+   </property>
+  </action>
+  <action name="view_refresh">
+   <property name="icon">
+    <iconset theme="view-refresh-symbolic">
+     <normaloff>.</normaloff>.</iconset>
+   </property>
+   <property name="text">
+    <string>&amp;Refresh</string>
+   </property>
+   <property name="toolTip">
+    <string>Reload cubes, meshes, and update edges.</string>
+   </property>
+   <property name="shortcut">
+    <string>F5</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::NoRole</enum>
+   </property>
+  </action>
+  <action name="view_slice">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>&amp;Slice</string>
+   </property>
+   <property name="toolTip">
+    <string>Enable slice mode.</string>
+   </property>
+   <property name="shortcut">
+    <string>V, S</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::NoRole</enum>
+   </property>
+  </action>
+  <action name="view_data_only">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>&amp;Data only</string>
+   </property>
+   <property name="toolTip">
+    <string>Show imaging data, and hide everything else.</string>
+   </property>
+   <property name="shortcut">
+    <string>V, D</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::NoRole</enum>
+   </property>
+  </action>
+  <action name="view_hl_loop">
+   <property name="text">
+    <string>Highlight &amp;loop</string>
+   </property>
+   <property name="toolTip">
+    <string>Highlight the loop at target position.</string>
+   </property>
+   <property name="shortcut">
+    <string>H, L</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::NoRole</enum>
+   </property>
+  </action>
+  <action name="view_hl_upstream">
+   <property name="text">
+    <string>Highlight &amp;upstream</string>
+   </property>
+   <property name="toolTip">
+    <string>Highlight upstream branches at target position.</string>
+   </property>
+   <property name="shortcut">
+    <string>H, U</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::NoRole</enum>
+   </property>
+  </action>
+  <action name="view_hl_downstream">
+   <property name="text">
+    <string>Highlight &amp;downstream</string>
+   </property>
+   <property name="toolTip">
+    <string>Highlight downstream branches at target position.</string>
+   </property>
+   <property name="shortcut">
+    <string>H, D</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::NoRole</enum>
+   </property>
+  </action>
+  <action name="view_hl_neuron">
+   <property name="text">
+    <string>Highlight &amp;neuron</string>
+   </property>
+   <property name="toolTip">
+    <string>Highlight neuron at target position.</string>
+   </property>
+   <property name="shortcut">
+    <string>H, N</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::NoRole</enum>
+   </property>
+  </action>
+  <action name="view_hl_raised">
+   <property name="text">
+    <string>Highlight &amp;raised nodes</string>
+   </property>
+   <property name="toolTip">
+    <string>Highlight all raised nodes.</string>
+   </property>
+   <property name="shortcut">
+    <string>H, R</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::NoRole</enum>
+   </property>
+  </action>
+  <action name="view_hl_orphan">
+   <property name="text">
+    <string>Highlight &amp;orphan</string>
+   </property>
+   <property name="toolTip">
+    <string>Highlight current orphan nodes.</string>
+   </property>
+   <property name="shortcut">
+    <string>H, O</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::NoRole</enum>
+   </property>
+  </action>
+  <action name="view_hl_reset">
+   <property name="text">
+    <string>&amp;Reset highlight</string>
+   </property>
+   <property name="toolTip">
+    <string>Reset highlight.</string>
+   </property>
+   <property name="shortcut">
+    <string>H, H</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::NoRole</enum>
+   </property>
+  </action>
+  <action name="view_channels">
+   <property name="text">
+    <string>&amp;Channels...</string>
+   </property>
+   <property name="toolTip">
+    <string>Channel settings.</string>
+   </property>
+   <property name="shortcut">
+    <string>V, C</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::NoRole</enum>
+   </property>
+  </action>
+  <action name="view_quality">
+   <property name="text">
+    <string>&amp;Quality...</string>
+   </property>
+   <property name="toolTip">
+    <string>Change display quality.</string>
+   </property>
+   <property name="shortcut">
+    <string>V, Q</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::NoRole</enum>
+   </property>
+  </action>
+  <action name="tracing_connect">
+   <property name="icon">
+    <iconset theme="tracing-connect">
+     <normaloff>.</normaloff>.</iconset>
+   </property>
+   <property name="text">
+    <string>&amp;Connect</string>
+   </property>
+   <property name="toolTip">
+    <string>Find a path connecting the current position and the target position.</string>
+   </property>
+   <property name="shortcut">
+    <string>C</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::NoRole</enum>
+   </property>
+  </action>
+  <action name="tracing_extend">
+   <property name="icon">
+    <iconset theme="tracing-extend">
+     <normaloff>.</normaloff>.</iconset>
+   </property>
+   <property name="text">
+    <string>&amp;Extend</string>
+   </property>
+   <property name="toolTip">
+    <string>Extend the current edge with the putative path.</string>
+   </property>
+   <property name="shortcut">
+    <string>Space</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::NoRole</enum>
+   </property>
+  </action>
+  <action name="tracing_branch">
+   <property name="icon">
+    <iconset theme="tracing-branch">
+     <normaloff>.</normaloff>.</iconset>
+   </property>
+   <property name="text">
+    <string>&amp;Branch</string>
+   </property>
+   <property name="toolTip">
+    <string>Create a new branch with the putative path.</string>
+   </property>
+   <property name="shortcut">
+    <string>B</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::NoRole</enum>
+   </property>
+  </action>
+  <action name="tracing_attach">
+   <property name="icon">
+    <iconset theme="tracing-attach">
+     <normaloff>.</normaloff>.</iconset>
+   </property>
+   <property name="text">
+    <string>&amp;Attach...</string>
+   </property>
+   <property name="toolTip">
+    <string>Create an attachment with the putative path at target position.</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+Shift+A</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::NoRole</enum>
+   </property>
+  </action>
+  <action name="tracing_end">
+   <property name="icon">
+    <iconset theme="tracing-end">
+     <normaloff>.</normaloff>.</iconset>
+   </property>
+   <property name="text">
+    <string>En&amp;d</string>
+   </property>
+   <property name="toolTip">
+    <string>Declare the node at the current position as finished.</string>
+   </property>
+   <property name="shortcut">
+    <string>E</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::NoRole</enum>
+   </property>
+  </action>
+  <action name="tracing_end_as">
+   <property name="icon">
+    <iconset theme="tracing-end-as">
+     <normaloff>.</normaloff>.</iconset>
+   </property>
+   <property name="text">
+    <string>End &amp;as...</string>
+   </property>
+   <property name="toolTip">
+    <string>Declare the node at the current position as finished abnormally.</string>
+   </property>
+   <property name="shortcut">
+    <string>Shift+E</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::NoRole</enum>
+   </property>
+  </action>
+  <action name="act_rec_mark1">
+   <property name="icon">
+    <iconset theme="tracing-mark1">
+     <normaloff>.</normaloff>.</iconset>
+   </property>
+   <property name="text">
+    <string>Mark &amp;1 ???</string>
+   </property>
+   <property name="toolTip">
+    <string>Set mark NO. 1 at the target position</string>
+   </property>
+   <property name="shortcut">
+    <string>1</string>
+   </property>
+   <property name="visible">
+    <bool>false</bool>
+   </property>
+  </action>
+  <action name="act_rec_mark0">
+   <property name="icon">
+    <iconset theme="tracing-mark0">
+     <normaloff>.</normaloff>.</iconset>
+   </property>
+   <property name="text">
+    <string>Clear mark (&amp;0) ???</string>
+   </property>
+   <property name="toolTip">
+    <string>Clear the mark at the target position</string>
+   </property>
+   <property name="shortcut">
+    <string>0</string>
+   </property>
+   <property name="visible">
+    <bool>false</bool>
+   </property>
+  </action>
+  <action name="tracing_delete">
+   <property name="icon">
+    <iconset theme="tracing-delete">
+     <normaloff>.</normaloff>.</iconset>
+   </property>
+   <property name="text">
+    <string>Dele&amp;te</string>
+   </property>
+   <property name="toolTip">
+    <string>Delete an edge or part of an edge.</string>
+   </property>
+   <property name="shortcut">
+    <string>X, X</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::NoRole</enum>
+   </property>
+  </action>
+  <action name="tracing_examine">
+   <property name="icon">
+    <iconset theme="tracing-examine">
+     <normaloff>.</normaloff>.</iconset>
+   </property>
+   <property name="text">
+    <string>Exa&amp;mined</string>
+   </property>
+   <property name="toolTip">
+    <string>Mark the edge as examined.</string>
+   </property>
+   <property name="shortcut">
+    <string>W</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::NoRole</enum>
+   </property>
+  </action>
+  <action name="help_manual">
+   <property name="icon">
+    <iconset theme="help-contents-symbolic">
+     <normaloff>.</normaloff>.</iconset>
+   </property>
+   <property name="text">
+    <string>&amp;Manual...</string>
+   </property>
+   <property name="toolTip">
+    <string>Show manual for this application.</string>
+   </property>
+   <property name="shortcut">
+    <string>F1</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::NoRole</enum>
+   </property>
+  </action>
+  <action name="help_about">
+   <property name="icon">
+    <iconset theme="help-about-symbolic">
+     <normaloff>.</normaloff>.</iconset>
+   </property>
+   <property name="text">
+    <string>&amp;About...</string>
+   </property>
+   <property name="toolTip">
+    <string>Show application information.</string>
+   </property>
+   <property name="shortcut">
+    <string>Shift+F1</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::AboutRole</enum>
+   </property>
+  </action>
+  <action name="tools_save_img">
+   <property name="icon">
+    <iconset theme="document-save-symbolic">
+     <normaloff>.</normaloff>.</iconset>
+   </property>
+   <property name="text">
+    <string>Save &amp;image...</string>
+   </property>
+   <property name="toolTip">
+    <string>Save currently loaded image.</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::NoRole</enum>
+   </property>
+  </action>
+  <actiongroup name="view_mode">
+   <action name="view_global">
+    <property name="checkable">
+     <bool>true</bool>
+    </property>
+    <property name="checked">
+     <bool>true</bool>
+    </property>
+    <property name="text">
+     <string>&amp;Global</string>
+    </property>
+    <property name="toolTip">
+     <string>Global view.</string>
+    </property>
+    <property name="shortcut">
+     <string>V, 1</string>
+    </property>
+    <property name="menuRole">
+     <enum>QAction::NoRole</enum>
+    </property>
+   </action>
+   <action name="view_closeup">
+    <property name="checkable">
+     <bool>true</bool>
+    </property>
+    <property name="text">
+     <string>&amp;Closeup</string>
+    </property>
+    <property name="toolTip">
+     <string>Close-up view.</string>
+    </property>
+    <property name="shortcut">
+     <string>V, 2</string>
+    </property>
+    <property name="menuRole">
+     <enum>QAction::NoRole</enum>
+    </property>
+   </action>
+   <action name="view_mixed">
+    <property name="checkable">
+     <bool>true</bool>
+    </property>
+    <property name="text">
+     <string>&amp;Mixed</string>
+    </property>
+    <property name="toolTip">
+     <string>Mixed view.</string>
+    </property>
+    <property name="shortcut">
+     <string>V, 3</string>
+    </property>
+    <property name="menuRole">
+     <enum>QAction::NoRole</enum>
+    </property>
+   </action>
+   <property name="exclusive">
+    <bool>true</bool>
+   </property>
+  </actiongroup>
+ </widget>
+ <customwidgets>
+  <customwidget>
+   <class>gapr::fix::Canvas</class>
+   <extends>QOpenGLWidget</extends>
+   <header location="global">QOpenGLWidget</header>
+  </customwidget>
+  <customwidget>
+   <class>gapr::range_widget_slave</class>
+   <extends>QWidget</extends>
+   <header location="global">QWidget</header>
+  </customwidget>
+ </customwidgets>
+ <tabstops>
+  <tabstop>menubar</tabstop>
+  <tabstop>canvas</tabstop>
+ </tabstops>
+ <resources/>
+ <connections/>
+</ui>

@@ -1,0 +1,10 @@
+#ifndef _GAPR_INCLUDE_VERSION_HH_
+#define _GAPR_INCLUDE_VERSION_HH_
+
+#define GAPR_MAJOR_VERSION @PACKAGE_VERSION_MAJOR@
+#define GAPR_MINOR_VERSION @PACKAGE_VERSION_MINOR@
+#define GAPR_MICRO_VERSION @PACKAGE_VERSION_PATCH@
+
+const static int gapr_try_avoid_include_version_hh=0;
+
+#endif

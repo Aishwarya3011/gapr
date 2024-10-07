@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1">
+		<link rel="icon" href="/favicon.png" type="image/png">
+		<link rel="stylesheet" href="css/bootstrap.min.css">
+		<link rel="stylesheet" href="css/fontawesome-all.min.css">
+		<title>Rank</title>
+	</head>
+	<body>
+		<div class="container">
+			<div id="alert">
+			</div>
+			<table class="table table-striped">
+				<thead class="thead-dark">
+					<tr>
+						<th scope="col">User</th>
+						<th scope="col">Rank</th>
+						<th scope="col">Score</th>
+					</tr>
+				</thead>
+				<tbody id="list">
+				</tbody>
+			</table>
+		</div>
+
+		<script src="js/jquery-3.2.1.slim.min.js"></script>
+		<script src="js/popper.min.js"></script>
+		<script src="js/bootstrap.min.js"></script>
+		<script>
+			window.addEventListener('DOMContentLoaded', function() {
+				var cb_ok=function(res) {
+					var r=JSON.parse(res);
+					$("#alert").html('<div class="alert alert-info" role="alert">'+r.time+'</div>');
+					var h='';
+					r.ranks.forEach(function(rank) {
+						h+='<tr><th scope="row">'+rank.u+'</th><td>';
+						if(rank.rd!=0) {
+							h+=rank.rd+'/';
+						}
+						h+=rank.rm+'</td><td>';
+						if(rank.sd!=0) {
+							h+='<a class="fas fa-info-circle text-info" data-toggle="tooltip" data-html="true" data-placement="left" title="';
+							h+='proofread nodes: '+rank.sdpr;
+							h+='<br/> reported errors: '+rank.sdrep;
+							h+='"></a> ';
+							h+=rank.sd+'/';
+						}
+						h+=rank.sm+'</td></tr>';
+					});
+					$("#list").html(h);
+					$('[data-toggle="tooltip"]').tooltip();
+				};
+				var cb_err=function(e) {
+					$("#alert").html('<div class="alert alert-warning" role="alert">'+e+'</div>');
+				};
+				var xmlHttp=new XMLHttpRequest();
+				xmlHttp.onreadystatechange=function() {
+					if(xmlHttp.readyState===4) {
+						if(xmlHttp.status===200) {
+							cb_ok(xmlHttp.responseText);
+						} else {
+							cb_err("HTTP Error: "+xmlHttp.status);
+						}
+					}
+				};
+				xmlHttp.open("GET", "/api/rank");
+				xmlHttp.send();
+			});
+		</script>
+	</body>
+</html>

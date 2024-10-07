@@ -1,0 +1,6 @@
+[wrap-file]
+directory=boost_1_76_0
+source_url=https://nchc.dl.sourceforge.net/project/boost/boost/1.76.0/boost_1_76_0.tar.bz2
+source_filename=boost_1_76_0.tar.bz2
+source_hash=f0397ba6e982c4450f27bf32a2a83292aba035b827a5623a14636ea583318c41
+patch_directory=boost

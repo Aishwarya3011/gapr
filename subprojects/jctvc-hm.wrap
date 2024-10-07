@@ -1,0 +1,5 @@
+[wrap-svn]
+directory=HM-16.20
+url=https://hevc.hhi.fraunhofer.de/svn/svn_HEVCSoftware/tags/HM-16.20/
+revision=HEAD
+patch_directory=jctvc-hm

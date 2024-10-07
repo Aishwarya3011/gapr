@@ -1,0 +1,167 @@
+diff -ur ./priv-hevc.orig/build/linux/common/makefile.base priv-hevc/build/linux/common/makefile.base
+--- ./priv-hevc.orig/build/linux/common/makefile.base	2019-08-08 14:49:40.584422521 +0800
++++ priv-hevc/build/linux/common/makefile.base	2019-08-08 15:01:24.364213189 +0800
+@@ -47,8 +47,8 @@
+ 
+ # default cpp flags for all configurations
+ #CPPFLAGS          = -Wall $(DEFS) -I$(CURDIR)/$(INC_DIR) $(USER_INC_DIRS)
+-CPPFLAGS          = $(DEFS) -I$(CURDIR)/$(INC_DIR) $(USER_INC_DIRS) -Wall -Wshadow -Wno-sign-compare -Werror -std=c++11
+-CFLAGS          = $(DEFS) -I$(CURDIR)/$(INC_DIR) $(USER_INC_DIRS) -Wall -Wshadow -Wno-sign-compare -Werror
++CPPFLAGS          = $(DEFS) -I$(CURDIR)/$(INC_DIR) $(USER_INC_DIRS) -Wall -Wshadow -Wno-sign-compare -std=c++11
++CFLAGS          = $(DEFS) -I$(CURDIR)/$(INC_DIR) $(USER_INC_DIRS) -Wall -Wshadow -Wno-sign-compare
+ 
+ ########## 
+ # enforce 32-bit build : 1=yes, 0=no
+diff -ur ./priv-hevc.orig/source/Lib/TLibDecoder/TDecGop.cpp priv-hevc/source/Lib/TLibDecoder/TDecGop.cpp
+--- ./priv-hevc.orig/source/Lib/TLibDecoder/TDecGop.cpp	2019-08-08 14:49:40.598422419 +0800
++++ priv-hevc/source/Lib/TLibDecoder/TDecGop.cpp	2019-08-08 15:01:24.364213189 +0800
+@@ -73,6 +73,8 @@
+ {
+ }
+ 
++#define printf(...) do { } while(false)
++
+ Void TDecGop::init( TDecEntropy*            pcEntropyDecoder,
+                    TDecSbac*               pcSbacDecoder,
+                    TDecBinCABAC*           pcBinCABAC,
+diff -ur ./priv-hevc.orig/source/Lib/TLibEncoder/TEncGOP.cpp priv-hevc/source/Lib/TLibEncoder/TEncGOP.cpp
+--- ./priv-hevc.orig/source/Lib/TLibEncoder/TEncGOP.cpp	2019-08-08 14:49:40.598422419 +0800
++++ priv-hevc/source/Lib/TLibEncoder/TEncGOP.cpp	2019-08-08 15:12:00.169597902 +0800
+@@ -71,6 +71,8 @@
+   }
+ }
+ 
++#define printf(...) do { } while(false)
++
+ TEncGOP::TEncGOP()
+ {
+   m_iLastIDR            = 0;
+diff -ur ./priv-hevc.orig/source/Lib/TLibCommon/TComRom.cpp priv-hevc/source/Lib/TLibCommon/TComRom.cpp
+--- ./priv-hevc.orig/source/Lib/TLibCommon/TComRom.cpp	2019-08-30 17:03:13.845457989 +0800
++++ priv-hevc/source/Lib/TLibCommon/TComRom.cpp	2019-08-30 17:06:20.442091579 +0800
+@@ -36,6 +36,8 @@
+ */
+ 
+ #include "TComRom.h"
++
++#include <atomic>
+ #include <memory.h>
+ #include <stdlib.h>
+ #include <stdio.h>
+@@ -175,9 +177,12 @@
+   }
+ };
+ 
++static std::atomic<int> _rom_refc{0};
+ // initialize ROM variables
+ Void initROM()
+ {
++	if(0!=_rom_refc.fetch_add(1))
++		return;
+   Int i, c;
+ 
+   // g_aucConvertToBit[ x ]: log2(x/4), if x=4 -> 0, x=8 -> 1, x=16 -> 2, ...
+@@ -262,6 +267,8 @@
+ 
+ Void destroyROM()
+ {
++	if(1!=_rom_refc.fetch_sub(1))
++		return;
+   for(UInt groupTypeIndex = 0; groupTypeIndex < SCAN_NUMBER_OF_GROUP_TYPES; groupTypeIndex++)
+   {
+     for (UInt scanOrderIndex = 0; scanOrderIndex < SCAN_NUMBER_OF_TYPES; scanOrderIndex++)
+diff -ur priv-hevc-bkup/source/Lib/TLibDecoder/TDecConformance.cpp priv-hevc/source/Lib/TLibDecoder/TDecConformance.cpp
+--- priv-hevc-bkup/source/Lib/TLibDecoder/TDecConformance.cpp	2019-09-02 10:18:54.029292900 +0800
++++ priv-hevc/source/Lib/TLibDecoder/TDecConformance.cpp	2019-09-02 10:25:14.074214800 +0800
+@@ -118,25 +118,25 @@
+     { Profile::MAINSTILLPICTURE,   "Main Still Picture",              8, CHROMA_420, false, false, ENABLED , DISABLED, DISABLED, DISABLED, DISABLED, HBR_1        , false, 256, 64, true ,   1000,   1100,     1500,   10    , mainLevelTierInfo },
+     { Profile::MAINREXT,           "Monochrome",                      8, CHROMA_400, false, false, ENABLED , DISABLED, DISABLED, DISABLED, DISABLED, HBR_1_OR_2   , false, 256, 64, false,    667,    733,     1000,   10    , mainLevelTierInfo },
+     { Profile::MAINREXT,           "Monochrome 12",                  12, CHROMA_400, false, false, ENABLED , DISABLED, DISABLED, DISABLED, DISABLED, HBR_1_OR_2   , false, 256, 64, false,   1000,   1100,     1500,   10    , mainLevelTierInfo },
+-    { Profile::MAINREXT,           "Monochrome 16",                  16, CHROMA_400, false, false, ENABLED , OPTIONAL, OPTIONAL, DISABLED, DISABLED, HBR_1_OR_2   , false, 256, 64, false,   1333,   1467,     2000,   10    , mainLevelTierInfo },
++    { Profile::MAINREXT,           "Monochrome 16",                  16, CHROMA_400, false, false, ENABLED , OPTIONAL_HM, OPTIONAL_HM, DISABLED, DISABLED, HBR_1_OR_2   , false, 256, 64, false,   1333,   1467,     2000,   10    , mainLevelTierInfo },
+     { Profile::MAINREXT,           "Main 12",                        12, CHROMA_420, false, false, ENABLED , DISABLED, DISABLED, DISABLED, DISABLED, HBR_1_OR_2   , false, 256, 64, false,   1500,   1650,     2250,   10    , mainLevelTierInfo },
+-    { Profile::MAINREXT,           "Main 4:2:2 10",                  10, CHROMA_422, false, false, ENABLED , DISABLED, DISABLED, OPTIONAL, DISABLED, HBR_1_OR_2   , false, 256, 64, false,   1667,   1833,     2500,    5    , mainLevelTierInfo },
+-    { Profile::MAINREXT,           "Main 4:2:2 12",                  12, CHROMA_422, false, false, ENABLED , DISABLED, DISABLED, OPTIONAL, DISABLED, HBR_1_OR_2   , false, 256, 64, false,   2000,   2200,     3000,    5    , mainLevelTierInfo },
+-    { Profile::MAINREXT,           "Main 4:4:4",                      8, CHROMA_444, false, false, ENABLED , OPTIONAL, DISABLED, OPTIONAL, DISABLED, HBR_1_OR_2   , false, 256, 64, false,   2000,   2200,     3000,    5    , mainLevelTierInfo },
+-    { Profile::MAINREXT,           "Main 4:4:4 10",                  10, CHROMA_444, false, false, ENABLED , OPTIONAL, DISABLED, OPTIONAL, DISABLED, HBR_1_OR_2   , false, 256, 64, false,   2500,   2750,     3750,    5    , mainLevelTierInfo },
+-    { Profile::MAINREXT,           "Main 4:4:4 12",                  12, CHROMA_444, false, false, ENABLED , OPTIONAL, DISABLED, OPTIONAL, DISABLED, HBR_1_OR_2   , false, 256, 64, false,   3000,   3300,     4500,    5    , mainLevelTierInfo },
+-    { Profile::MAINREXT,           "Main Intra",                      8, CHROMA_420, true , false, OPTIONAL, DISABLED, DISABLED, DISABLED, DISABLED, HBR_1_OR_2   , false, 256, 64, false,   1000,   1100,     1500,   10    , mainLevelTierInfo },
+-    { Profile::MAINREXT,           "Main 10 Intra",                  10, CHROMA_420, true , false, OPTIONAL, DISABLED, DISABLED, DISABLED, DISABLED, HBR_1_OR_2   , false, 256, 64, false,   1000,   1100,     1875,   10    , mainLevelTierInfo },
+-    { Profile::MAINREXT,           "Main 12 Intra",                  12, CHROMA_420, true , false, OPTIONAL, DISABLED, DISABLED, DISABLED, DISABLED, HBR_1_OR_2   , false, 256, 64, false,   1500,   1650,     2250,   10    , mainLevelTierInfo },
+-    { Profile::MAINREXT,           "Main 4:2:2 10 Intra",            10, CHROMA_422, true , false, OPTIONAL, DISABLED, DISABLED, OPTIONAL, DISABLED, HBR_1_OR_2   , false, 256, 64, false,   1667,   1833,     2500,    5    , mainLevelTierInfo },
+-    { Profile::MAINREXT,           "Main 4:2:2 12 Intra",            12, CHROMA_422, true , false, OPTIONAL, DISABLED, DISABLED, OPTIONAL, DISABLED, HBR_1_OR_2   , false, 256, 64, false,   2000,   2200,     3000,    5    , mainLevelTierInfo },
+-    { Profile::MAINREXT,           "Main 4:4:4 Intra",                8, CHROMA_444, true , false, OPTIONAL, OPTIONAL, DISABLED, OPTIONAL, DISABLED, HBR_1_OR_2   , false, 256, 64, false,   2000,   2200,     3000,    5    , mainLevelTierInfo },
+-    { Profile::MAINREXT,           "Main 4:4:4 10 Intra",            10, CHROMA_444, true , false, OPTIONAL, OPTIONAL, DISABLED, OPTIONAL, DISABLED, HBR_1_OR_2   , false, 256, 64, false,   2500,   2750,     3750,    5    , mainLevelTierInfo },
+-    { Profile::MAINREXT,           "Main 4:4:4 12 Intra",            12, CHROMA_444, true , false, OPTIONAL, OPTIONAL, DISABLED, OPTIONAL, DISABLED, HBR_1_OR_2   , false, 256, 64, false,   3000,   3300,     4500,    5    , mainLevelTierInfo },
+-    { Profile::MAINREXT,           "Main 4:4:4 16 Intra",            16, CHROMA_444, true , false, OPTIONAL, OPTIONAL, OPTIONAL, OPTIONAL, DISABLED, HBR_1_OR_2   , false, 256, 64, false,   4000,   4400,     6000,    5    , mainLevelTierInfo },
+-    { Profile::MAINREXT,           "Main 4:4:4 Still Picture",        8, CHROMA_444, true , true , OPTIONAL, OPTIONAL, DISABLED, OPTIONAL, DISABLED, HBR_1_OR_2   , false, 256, 64, true ,   2000,   2200,     3000,    5    , mainLevelTierInfo },
+-    { Profile::MAINREXT,           "Main 4:4:4 16 Still Picture",    16, CHROMA_444, true , true , OPTIONAL, OPTIONAL, OPTIONAL, OPTIONAL, DISABLED, HBR_1_OR_2   , false, 256, 64, true ,   4000,   4400,     6000,    5    , mainLevelTierInfo },
+-    { Profile::HIGHTHROUGHPUTREXT, "High Throughput 4:4:4 16 Intra", 16, CHROMA_444, true , false, OPTIONAL, OPTIONAL, OPTIONAL, OPTIONAL, ENABLED , HBR_12_OR_24 , true , 256, 64, false,   4000,   4400,     6000,    5    , mainLevelTierInfo },
++    { Profile::MAINREXT,           "Main 4:2:2 10",                  10, CHROMA_422, false, false, ENABLED , DISABLED, DISABLED, OPTIONAL_HM, DISABLED, HBR_1_OR_2   , false, 256, 64, false,   1667,   1833,     2500,    5    , mainLevelTierInfo },
++    { Profile::MAINREXT,           "Main 4:2:2 12",                  12, CHROMA_422, false, false, ENABLED , DISABLED, DISABLED, OPTIONAL_HM, DISABLED, HBR_1_OR_2   , false, 256, 64, false,   2000,   2200,     3000,    5    , mainLevelTierInfo },
++    { Profile::MAINREXT,           "Main 4:4:4",                      8, CHROMA_444, false, false, ENABLED , OPTIONAL_HM, DISABLED, OPTIONAL_HM, DISABLED, HBR_1_OR_2   , false, 256, 64, false,   2000,   2200,     3000,    5    , mainLevelTierInfo },
++    { Profile::MAINREXT,           "Main 4:4:4 10",                  10, CHROMA_444, false, false, ENABLED , OPTIONAL_HM, DISABLED, OPTIONAL_HM, DISABLED, HBR_1_OR_2   , false, 256, 64, false,   2500,   2750,     3750,    5    , mainLevelTierInfo },
++    { Profile::MAINREXT,           "Main 4:4:4 12",                  12, CHROMA_444, false, false, ENABLED , OPTIONAL_HM, DISABLED, OPTIONAL_HM, DISABLED, HBR_1_OR_2   , false, 256, 64, false,   3000,   3300,     4500,    5    , mainLevelTierInfo },
++    { Profile::MAINREXT,           "Main Intra",                      8, CHROMA_420, true , false, OPTIONAL_HM, DISABLED, DISABLED, DISABLED, DISABLED, HBR_1_OR_2   , false, 256, 64, false,   1000,   1100,     1500,   10    , mainLevelTierInfo },
++    { Profile::MAINREXT,           "Main 10 Intra",                  10, CHROMA_420, true , false, OPTIONAL_HM, DISABLED, DISABLED, DISABLED, DISABLED, HBR_1_OR_2   , false, 256, 64, false,   1000,   1100,     1875,   10    , mainLevelTierInfo },
++    { Profile::MAINREXT,           "Main 12 Intra",                  12, CHROMA_420, true , false, OPTIONAL_HM, DISABLED, DISABLED, DISABLED, DISABLED, HBR_1_OR_2   , false, 256, 64, false,   1500,   1650,     2250,   10    , mainLevelTierInfo },
++    { Profile::MAINREXT,           "Main 4:2:2 10 Intra",            10, CHROMA_422, true , false, OPTIONAL_HM, DISABLED, DISABLED, OPTIONAL_HM, DISABLED, HBR_1_OR_2   , false, 256, 64, false,   1667,   1833,     2500,    5    , mainLevelTierInfo },
++    { Profile::MAINREXT,           "Main 4:2:2 12 Intra",            12, CHROMA_422, true , false, OPTIONAL_HM, DISABLED, DISABLED, OPTIONAL_HM, DISABLED, HBR_1_OR_2   , false, 256, 64, false,   2000,   2200,     3000,    5    , mainLevelTierInfo },
++    { Profile::MAINREXT,           "Main 4:4:4 Intra",                8, CHROMA_444, true , false, OPTIONAL_HM, OPTIONAL_HM, DISABLED, OPTIONAL_HM, DISABLED, HBR_1_OR_2   , false, 256, 64, false,   2000,   2200,     3000,    5    , mainLevelTierInfo },
++    { Profile::MAINREXT,           "Main 4:4:4 10 Intra",            10, CHROMA_444, true , false, OPTIONAL_HM, OPTIONAL_HM, DISABLED, OPTIONAL_HM, DISABLED, HBR_1_OR_2   , false, 256, 64, false,   2500,   2750,     3750,    5    , mainLevelTierInfo },
++    { Profile::MAINREXT,           "Main 4:4:4 12 Intra",            12, CHROMA_444, true , false, OPTIONAL_HM, OPTIONAL_HM, DISABLED, OPTIONAL_HM, DISABLED, HBR_1_OR_2   , false, 256, 64, false,   3000,   3300,     4500,    5    , mainLevelTierInfo },
++    { Profile::MAINREXT,           "Main 4:4:4 16 Intra",            16, CHROMA_444, true , false, OPTIONAL_HM, OPTIONAL_HM, OPTIONAL_HM, OPTIONAL_HM, DISABLED, HBR_1_OR_2   , false, 256, 64, false,   4000,   4400,     6000,    5    , mainLevelTierInfo },
++    { Profile::MAINREXT,           "Main 4:4:4 Still Picture",        8, CHROMA_444, true , true , OPTIONAL_HM, OPTIONAL_HM, DISABLED, OPTIONAL_HM, DISABLED, HBR_1_OR_2   , false, 256, 64, true ,   2000,   2200,     3000,    5    , mainLevelTierInfo },
++    { Profile::MAINREXT,           "Main 4:4:4 16 Still Picture",    16, CHROMA_444, true , true , OPTIONAL_HM, OPTIONAL_HM, OPTIONAL_HM, OPTIONAL_HM, DISABLED, HBR_1_OR_2   , false, 256, 64, true ,   4000,   4400,     6000,    5    , mainLevelTierInfo },
++    { Profile::HIGHTHROUGHPUTREXT, "High Throughput 4:4:4 16 Intra", 16, CHROMA_444, true , false, OPTIONAL_HM, OPTIONAL_HM, OPTIONAL_HM, OPTIONAL_HM, ENABLED , HBR_12_OR_24 , true , 256, 64, false,   4000,   4400,     6000,    5    , mainLevelTierInfo },
+     { Profile::NONE, 0 }
+ };
+ 
+@@ -314,7 +314,7 @@
+                       const ProfileLevelTierFeatures &features)
+ {
+   const TRISTATE rextToolsEnabled = features.getProfileFeatures()->generalRExtToolsEnabled;
+-  if ( rextToolsEnabled != OPTIONAL)
++  if ( rextToolsEnabled != OPTIONAL_HM)
+   {
+     const Bool bWantedFlagState = rextToolsEnabled == ENABLED;
+     std::string flags;
+@@ -337,7 +337,7 @@
+     TDecConformanceCheck::checkRange<UInt>(pps.getPpsRangeExtension().getLog2MaxTransformSkipBlockSize()-2, "log2_max_transform_skip_block_size_minus2", 0, sps.getQuadtreeTULog2MaxSize()-2);
+   }
+ 
+-  if (features.getProfileFeatures()->extendedPrecisionProcessingFlag != OPTIONAL)
++  if (features.getProfileFeatures()->extendedPrecisionProcessingFlag != OPTIONAL_HM)
+   {
+     const Bool bWantedFlagState = features.getProfileFeatures()->extendedPrecisionProcessingFlag == ENABLED;
+     if (sps.getSpsRangeExtension().getExtendedPrecisionProcessingFlag() != bWantedFlagState)
+@@ -347,7 +347,7 @@
+     }
+   }
+ 
+-  if (features.getProfileFeatures()->chromaQpOffsetListEnabledFlag != OPTIONAL)
++  if (features.getProfileFeatures()->chromaQpOffsetListEnabledFlag != OPTIONAL_HM)
+   {
+     const Bool bWantedFlagState = features.getProfileFeatures()->chromaQpOffsetListEnabledFlag == ENABLED;
+     if (pps.getPpsRangeExtension().getChromaQpOffsetListEnabledFlag() != bWantedFlagState)
+@@ -361,7 +361,7 @@
+     TDecConformanceCheck::checkRange<UInt>(pps.getPpsRangeExtension().getDiffCuChromaQpOffsetDepth(), "diff_cu_chroma_qp_offset_depth", 0, sps.getLog2DiffMaxMinCodingBlockSize());
+   }
+ 
+-  if (features.getProfileFeatures()->cabacBypassAlignmentEnabledFlag != OPTIONAL)
++  if (features.getProfileFeatures()->cabacBypassAlignmentEnabledFlag != OPTIONAL_HM)
+   {
+     const Bool bWantedFlagState = features.getProfileFeatures()->cabacBypassAlignmentEnabledFlag == ENABLED;
+     if (sps.getSpsRangeExtension().getCabacBypassAlignmentEnabledFlag() != bWantedFlagState)
+diff -ur priv-hevc-bkup/source/Lib/TLibDecoder/TDecConformance.h priv-hevc/source/Lib/TLibDecoder/TDecConformance.h
+--- priv-hevc-bkup/source/Lib/TLibDecoder/TDecConformance.h	2019-09-02 10:18:54.044917900 +0800
++++ priv-hevc/source/Lib/TLibDecoder/TDecConformance.h	2019-09-02 10:24:08.854488200 +0800
+@@ -68,7 +68,7 @@
+ typedef enum TRISTATE
+ {
+   DISABLED=0,
+-  OPTIONAL=1,
++  OPTIONAL_HM=1,
+   ENABLED=2
+ } TRISTATE;
+ 

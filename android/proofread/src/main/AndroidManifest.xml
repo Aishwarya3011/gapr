@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <uses-permission android:name="android.permission.INTERNET" />
+
+    <application
+        android:allowBackup="true"
+        android:icon="@mipmap/app_icon"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/app_icon_round"
+        android:supportsRtl="true"
+        android:theme="@style/AppTheme">
+
+        <activity
+            android:name=".Main"
+            android:label="@string/app_name"
+            android:exported="true"
+            android:screenOrientation="unspecified">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <!--                 android:excludeFromRecents="true"
+                            android:launchMode="singleInstance"
+
+        -->
+        <activity
+            android:name=".Proofread"
+            android:configChanges="screenSize|orientation|keyboard|keyboardHidden|navigation"
+            android:label="@string/act_proofread"
+            android:screenOrientation="sensorLandscape">
+            <meta-data
+                android:name="android.app.lib_name"
+                android:value="GaprAndroid" />
+            <meta-data
+                android:name="android.app.func_name"
+                android:value="create_native_activity" />
+        </activity>
+    </application>
+</manifest>

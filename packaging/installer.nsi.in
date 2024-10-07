@@ -1,0 +1,106 @@
+!pragma warning error all
+!include "MUI2.nsh"
+
+!define PACKAGE_NAME "@PACKAGE_NAME@"
+!define PACKAGE_TARNAME "@PACKAGE_TARNAME@"
+!define PACKAGE_VERSION "@PACKAGE_VERSION@"
+!define PACKAGE_REGISTRY_KEY "SOFTWARE\\@PACKAGE_ORG@\${PACKAGE_NAME}"
+!define PACKAGE_UNINSTALL_REGISTRY_KEY "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\{00fadb2b-4d35-4ca0-b4c5-0254198e86f8}"
+!define PACKAGE_TYPE "@PACKAGE_TYPE@"
+!define PACKAGE_PREFIX "@PACKAGE_PREFIX@"
+!define PACKAGE_SOURCE_DIR "@PACKAGE_SOURCE_DIR@"
+
+Name "${PACKAGE_NAME}"
+OutFile "${PACKAGE_NAME}-${PACKAGE_VERSION}-Windows-${PACKAGE_TYPE}.exe"
+Unicode True
+
+RequestExecutionLevel user
+InstallDir "$LOCALAPPDATA\${PACKAGE_NAME}"
+InstallDirRegKey HKCU "${PACKAGE_REGISTRY_KEY}" "Install_Dir"
+ManifestDPIAware true
+Icon "${PACKAGE_SOURCE_DIR}\..\source\guilib\icon.ico"
+
+!define MUI_ABORTWARNING
+!define MUI_ICON "${PACKAGE_SOURCE_DIR}\..\source\guilib\icon.ico"
+!define MUI_HEADERIMAGE
+!define MUI_HEADERIMAGE_BITMAP "${PACKAGE_SOURCE_DIR}\banner.bmp"
+!define MUI_LANGDLL_REGISTRY_ROOT "HKCU"
+!define MUI_LANGDLL_REGISTRY_KEY "${PACKAGE_REGISTRY_KEY}"
+!define MUI_LANGDLL_REGISTRY_VALUENAME "Install_Lang"
+!define MUI_LANGDLL_ALLLANGUAGES
+
+!insertmacro MUI_PAGE_COMPONENTS
+!insertmacro MUI_PAGE_DIRECTORY
+!insertmacro MUI_PAGE_INSTFILES
+
+!insertmacro MUI_UNPAGE_CONFIRM
+!insertmacro MUI_UNPAGE_INSTFILES
+
+!insertmacro MUI_LANGUAGE "English"
+!insertmacro MUI_LANGUAGE "SimpChinese"
+!insertmacro MUI_RESERVEFILE_LANGDLL
+
+Section "Files" SecFiles
+	SectionIn RO
+	SetOutPath "$INSTDIR"
+	File /r "${PACKAGE_PREFIX}\bin"
+	File /r "${PACKAGE_PREFIX}\lib"
+	File /r "${PACKAGE_PREFIX}\share"
+	WriteRegStr HKCU "${PACKAGE_REGISTRY_KEY}" "Install_Dir" "$INSTDIR"
+	WriteRegStr HKCU "${PACKAGE_UNINSTALL_REGISTRY_KEY}" "DisplayName" "${PACKAGE_NAME}"
+	WriteRegStr HKCU "${PACKAGE_UNINSTALL_REGISTRY_KEY}" "DisplayVersion" "${PACKAGE_VERSION}"
+!if "${PACKAGE_TYPE}" == "full"
+	WriteRegStr HKCU "${PACKAGE_UNINSTALL_REGISTRY_KEY}" "DisplayIcon" "$INSTDIR\bin\gapr.exe,0"
+!else
+	WriteRegStr HKCU "${PACKAGE_UNINSTALL_REGISTRY_KEY}" "DisplayIcon" "$INSTDIR\bin\gapr-proofread.exe,0"
+!endif
+	WriteRegStr HKCU "${PACKAGE_UNINSTALL_REGISTRY_KEY}" "UninstallString" "$INSTDIR\uninstall.exe"
+	WriteRegDWORD HKCU "${PACKAGE_UNINSTALL_REGISTRY_KEY}" "NoModify" 1
+	WriteRegDWORD HKCU "${PACKAGE_UNINSTALL_REGISTRY_KEY}" "NoRepair" 1
+	WriteUninstaller "$INSTDIR\uninstall.exe"
+SectionEnd
+
+Section "Shortcuts" SecMenu
+	CreateDirectory "$SMPROGRAMS\${PACKAGE_NAME}"
+	CreateShortcut "$SMPROGRAMS\${PACKAGE_NAME}\Uninstall.lnk" "$INSTDIR\uninstall.exe"
+	CreateShortcut "$SMPROGRAMS\${PACKAGE_NAME}\${PACKAGE_NAME} Proofread.lnk" "$INSTDIR\bin\${PACKAGE_TARNAME}-proofread.exe"
+
+!if "${PACKAGE_TYPE}" == "full"
+	CreateShortcut "$SMPROGRAMS\${PACKAGE_NAME}\${PACKAGE_NAME}.lnk" "$INSTDIR\bin\${PACKAGE_TARNAME}.exe"
+!endif
+
+SectionEnd
+
+Function .onInit
+	!insertmacro MUI_LANGDLL_DISPLAY
+FunctionEnd
+
+LangString DESC_SecFiles ${LANG_ENGLISH} "Install files."
+LangString DESC_SecMenu ${LANG_ENGLISH} "Create shortcuts."
+
+LangString DESC_SecFiles ${LANG_SIMPCHINESE} "安装文件。"
+LangString DESC_SecMenu ${LANG_SIMPCHINESE} "创建快捷方式。"
+
+!insertmacro MUI_FUNCTION_DESCRIPTION_BEGIN
+!insertmacro MUI_DESCRIPTION_TEXT ${SecFiles} $(DESC_SecFiles)
+!insertmacro MUI_DESCRIPTION_TEXT ${SecMenu} $(DESC_SecMenu)
+!insertmacro MUI_FUNCTION_DESCRIPTION_END
+
+Section "Uninstall"
+	DeleteRegKey HKCU "${PACKAGE_UNINSTALL_REGISTRY_KEY}"
+	DeleteRegKey HKCU "${PACKAGE_REGISTRY_KEY}"
+
+	Delete "$INSTDIR\uninstall.exe"
+	RMDir /r "$INSTDIR\bin"
+	RMDir /r "$INSTDIR\lib"
+	RMDir /r "$INSTDIR\share"
+	RMDir "$INSTDIR"
+
+	Delete "$SMPROGRAMS\${PACKAGE_NAME}\*.lnk"
+	RMDir "$SMPROGRAMS\${PACKAGE_NAME}"
+SectionEnd
+
+Function un.onInit
+	!insertmacro MUI_UNGETLANGUAGE
+FunctionEnd
+

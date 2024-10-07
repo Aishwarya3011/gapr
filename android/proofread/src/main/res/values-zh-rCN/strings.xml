@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Gapr</string>
+    <string name="start">开始</string>
+    <string name="username">用户名</string>
+    <string name="password">密码</string>
+    <string name="login">登入</string>
+    <string name="repository">仓库</string>
+    <string name="rotate">旋转</string>
+    <string name="error">错误</string>
+    <string name="welcome_to_gapr">欢迎使用Gapr。</string>
+    <string name="report_error">报错</string>
+    <string name="end_as">缺陷末端</string>
+    <string name="jump_to">跳转</string>
+    <string name="extend">延伸</string>
+    <string name="connect">连接</string>
+    <string name="contrast">对比度</string>
+    <string name="delete">删除</string>
+    <string name="data_only">隐藏结果</string>
+    <string name="proofread">校对</string>
+    <string name="zoom">缩放</string>
+    <string name="cursor">光标</string>
+    <string name="branch">分支</string>
+    <string name="skip">略过</string>
+    <string name="end">末端</string>
+    <string name="add_neuron">添加神经元</string>
+    <string name="network_usage_notice">此版本数据下载欠优化。\n没有WIFI的情况下，请注意流量使用情况。</string>
+    <string name="contrast_min">对比度\n下限</string>
+    <string name="copyright_short">© 2018-2022 <a href="http://www.yanlab.org.cn/">严军实验室</a> 苟凌峰</string>
+    <string name="act_proofread">Gapr校对</string>
+</resources>

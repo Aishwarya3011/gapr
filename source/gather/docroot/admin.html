@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1">
+		<link rel="icon" href="/favicon.png" type="image/png">
+		<link rel="stylesheet" href="css/bootstrap.min.css">
+		<title>Administration</title>
+	</head>
+	<body>
+		<ul class="nav justify-content-end">
+			<li class="nav-item">
+				<a class="nav-link" href="#chtier">Change tier</a>
+			</li>
+			<li class="nav-item">
+				<a class="nav-link" href="#chstg">Change stage</a>
+			</li>
+			<li class="nav-item">
+				<a class="nav-link" href="#stats">Statistics</a>
+			</li>
+			<!-- gettier getstage -->
+			<li class="nav-item">
+				<a class="nav-link" href="/progress.html">Progress</a>
+			</li>
+			<li class="nav-item">
+				<a class="nav-link" href="/rank.html">Rank</a>
+			</li>
+		</ul>
+		<div class="container">
+			<h4 id="chtier">Change tier</h4>
+			<form>
+				<div class="form-group">
+					<label for="changes">Changes</label>
+					<textarea class="form-control" id="chtier-input" aria-describedby="changesHelp" placeholder="Each line: username:desired-tier."></textarea>
+					<small id="chtier-input-help" class="form-text text-muted">0, root; 1, admin; 2, annotator; 3, proofreader; 10, locked.</small>
+				</div>
+				<button type="button" class="btn btn-primary" id="chtier-submit">Submit</button>
+			</form>
+			<div id="chtier-alert">
+			</div>
+			<br/>
+			<h4 id="stats">Statistics</h4>
+			<form>
+				<div class="form-group">
+					<label for="repo">Repo</label>
+					<input type="text" class="form-control" id="stats-repo" aria-describedby="repoHelp" placeholder="Enter repo">
+					<small id="stats-repo-help" class="form-text text-muted">Repository name.</small>
+				</div>
+				<button type="button" class="btn btn-primary" id="stats-submit">Get</button>
+			</form>
+			<div id="stats-alert">
+			</div>
+		</div>
+
+		<script src="js/jquery-3.2.1.slim.min.js"></script>
+		<script src="js/popper.min.js"></script>
+		<script src="js/bootstrap.min.js"></script>
+		<script>
+$("#stats-submit").on("click", function() {
+	var busy=false;
+	var info_elem=$("#stats-alert");
+	var repo_elem=$("#stats-repo");
+	var show_msg=function(sty, msg) {
+		info_elem.html('<div class="alert alert-'+sty+'" role="alert">'+msg+'</div>');
+	};
+	return function() {
+		if(busy)
+			return;
+		var repo=repo_elem.val();
+		if(repo==="") {
+			return show_msg('warning', "Empty repo");
+		}
+		busy=true;
+		show_msg('info', "Waiting...");
+		var xmlHttp=new XMLHttpRequest();
+		xmlHttp.responseType="blob";
+		xmlHttp.onreadystatechange=function() {
+			if(xmlHttp.readyState===4) {
+				if(xmlHttp.status===200) {
+					var a=document.createElement('a');
+					a.href=window.URL.createObjectURL(xmlHttp.response);
+					a.download="stats.txt";
+					a.dispatchEvent(new MouseEvent('click'));
+					show_msg('info', "Success!");
+				} else {
+					show_msg('warning', 'Error: '+xmlHttp.statusText);
+				}
+				busy=false;
+			}
+		};
+		xmlHttp.open("POST", "/api/stats");
+		xmlHttp.send(repo);
+	};
+}());
+
+$("#chtier-submit").on("click", function() {
+	var busy=false;
+	var info_elem=$("#chtier-alert");
+	var input_elem=$("#chtier-input");
+	var show_msg=function(sty, msg) {
+		info_elem.html('<div class="alert alert-'+sty+'" role="alert">'+msg+'</div>');
+	};
+	return function() {
+		if(busy)
+			return;
+		var input=input_elem.val();
+		if(input==="") {
+			return show_msg('warning', "No changes");
+		}
+		busy=true;
+		show_msg('info', "Waiting...");
+		var xmlHttp=new XMLHttpRequest();
+		xmlHttp.onreadystatechange=function() {
+			if(xmlHttp.readyState===4) {
+				if(xmlHttp.status===200) {
+					var res=xmlHttp.responseText;
+					if(res==="ok") {
+						show_msg('info', "Success!");
+					} else {
+						show_msg('warning', res);
+					}
+				} else {
+					var err='Error: '+xmlHttp.statusText;
+					if(xmlHttp.status==401) {
+						err+=' <a href="/login.html">Login</a>';
+					}
+					show_msg('warning', err);
+				}
+				busy=false;
+			}
+		};
+		xmlHttp.open("POST", "/api/chtier");
+		xmlHttp.send(input+'\n');
+	};
+}());
+		</script>
+	</body>
+</html>

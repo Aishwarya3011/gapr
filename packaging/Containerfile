@@ -1,0 +1,32 @@
+# Run:
+#   $ podman build -t yanlab/gapr . -f packaging/Containerfile
+# Maybe (with cuda-container-toolkit): --hooks-dir=/usr/share/containers/oci/hooks.d
+
+FROM docker.io/nvidia/cuda:12.2.0-devel-rockylinux9 as builder
+WORKDIR /work
+
+RUN dnf makecache && dnf install -y bzip2 unzip
+
+RUN curl -L https://api.anaconda.org/download/conda-forge/micromamba/1.4.9/linux-64/micromamba-1.4.9-0.tar.bz2 | tar -xjf -
+RUN ./bin/micromamba -p /opt/conda create \
+	&& ./bin/micromamba -p /opt/conda config set --env channel_alias https://mirrors.tuna.tsinghua.edu.cn/anaconda/cloud/
+
+RUN cd /opt && curl -OL 'https://download.pytorch.org/libtorch/cu118/libtorch-cxx11-abi-shared-with-deps-2.0.1%2Bcu118.zip'
+RUN cd /opt && unzip libtorch-cxx11-abi-shared-with-deps-*.zip && rm libtorch-cxx11-abi-shared-with-deps-*.zip
+#RUN ./bin/micromamba -p /opt/conda install -y -c conda-forge cudatoolkit'>=11.6.0,<12.0.0'
+#RUN ./bin/micromamba -p /opt/conda install -y -c conda-forge pytorch-gpu'>=1.12.0,<2.0.0'
+
+RUN ./bin/micromamba -p /opt/conda install -y -c conda-forge meson ninja yasm
+#RUN ./bin/micromamba -p /opt/conda install -y -c conda-forge libvpx
+
+ENV PATH "/opt/conda/bin:$PATH"
+RUN dnf install -y gtk3-devel qt5-qtbase-devel qt5-linguist
+RUN dnf install -y zlib-devel libtiff-devel openssl-devel libcurl-devel gsl-devel boost-devel
+RUN dnf install -y diffutils
+
+RUN --mount=type=bind,src=/,dst=gapr meson setup ./build ./gapr \
+	-Dwith-system-libvpx=false -Dwith-system-libwebm=false -Dwith-system-boost=true \
+	-Dwith-torch=enabled -Dtorch-prefix=/opt/libtorch
+RUN --mount=type=bind,src=/,dst=gapr --mount=type=bind,src=/subprojects,dst=gapr/subprojects,rw cd ./build && ninja
+RUN --mount=type=bind,src=/,dst=gapr cd ./build && ninja install
+

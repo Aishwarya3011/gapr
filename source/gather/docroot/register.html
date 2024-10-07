@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1">
+		<link rel="icon" href="/favicon.png" type="image/png">
+		<link rel="stylesheet" href="css/bootstrap.min.css">
+		<title>Register</title>
+	</head>
+	<body>
+		<ul class="nav justify-content-end">
+			<li class="nav-item">
+				<a class="nav-link" href="/login.html">Login</a>
+			</li>
+			<li class="nav-item">
+				<a class="nav-link active" href="#">Register</a>
+			</li>
+		</ul>
+		<div class="container">
+			<h4>Register</h4>
+			<form>
+				<div class="form-group">
+					<label for="username">Username</label>
+					<input type="text" class="form-control" id="username" aria-describedby="usernameHelp" placeholder="Enter username">
+					<small id="usernameHelp" class="form-text text-muted">Allowed: a-z, A-Z, 0-9, dot(.).</small>
+				</div>
+				<div class="form-group">
+					<label for="password">Password</label>
+					<input type="password" class="form-control" id="password" placeholder="Password">
+					<input type="password" class="form-control" id="password2" placeholder="Repeat">
+				</div>
+				<div class="form-group">
+					<label for="comment">Comment</label>
+					<input type="text" class="form-control" id="comment" aria-describedby="usernameHelp" placeholder="Enter comment">
+					<small id="usernameHelp" class="form-text text-muted">Your name, email address, phone number, WeChat account, etc. Eg. 张三(zs@xxx.cn).</small>
+				</div>
+				<button type="button" class="btn btn-primary" id="submit">Submit</button>
+			</form>
+			<div id="alert">
+			</div>
+		</div>
+
+		<script src="js/jquery-3.2.1.slim.min.js"></script>
+		<script src="js/popper.min.js"></script>
+		<script src="js/bootstrap.min.js"></script>
+		<script>
+$("#submit").on("click", function() {
+	var busy=false;
+	var info_elem=$("#alert");
+	var user_elem=$("#username");
+	var pass_elem=$("#password");
+	var pass2_elem=$("#password2");
+	var cmt_elem=$("#comment");
+	var show_msg=function(sty, msg) {
+		info_elem.html('<div class="alert alert-'+sty+'" role="alert">'+msg+'</div>');
+	};
+	return function() {
+		if(busy)
+			return;
+		var username=user_elem.val();
+		if(username==="") {
+			return show_msg('warning', "Empty username");
+		}
+		var password=pass_elem.val();
+		if(password.length<3) {
+			return show_msg('warning', "Password too short");
+		}
+		var password2=pass2_elem.val();
+		if(password!==password2) {
+			return show_msg('warning', "Different passwords");
+		}
+		var comment=cmt_elem.val();
+		if(comment==="") {
+			return show_msg('warning', "Empty comment");
+		}
+		busy=true;
+		show_msg('info', "Waiting...");
+		var xmlHttp=new XMLHttpRequest();
+		xmlHttp.onreadystatechange=function() {
+			if(xmlHttp.readyState===4) {
+				if(xmlHttp.status===200) {
+					var res=xmlHttp.responseText;
+					if(res==="") {
+						show_msg('info', "Success!");
+					} else {
+						show_msg('warning', res);
+					}
+				} else {
+					show_msg('warning', "Error: "+xmlHttp.statusText);
+				}
+				busy=false;
+			}
+		};
+		xmlHttp.open("POST", "/api/register");
+		xmlHttp.send(username+':'+password+'\n'+comment);
+	};
+}());
+		</script>
+	</body>
+</html>

@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<interface>
+	<object class="GtkShortcutsWindow" id="help_overlay">
+		<child>
+			<object class="GtkShortcutsSection">
+				<property name="visible">1</property>
+				<child>
+					<object class="GtkShortcutsGroup">
+						<property name="visible">1</property>
+						<property name="title">General</property>
+						<child>
+							<object class="GtkShortcutsShortcut">
+								<property name="visible">1</property>
+								<property name="accelerator">&lt;Primary&gt;i</property>
+								<property name="title">Show inspector</property>
+							</object>
+						</child>
+						<child>
+							<object class="GtkShortcutsShortcut">
+								<property name="visible">1</property>
+								<property name="accelerator">&lt;Primary&gt;F1</property>
+								<property name="title">Show this dialog</property>
+							</object>
+						</child>
+						<child>
+							<object class="GtkShortcutsShortcut">
+								<property name="visible">1</property>
+								<property name="accelerator">F1</property>
+								<property name="title">Show About Dialog</property>
+							</object>
+						</child>
+						<child>
+							<object class="GtkShortcutsShortcut">
+								<property name="visible">1</property>
+								<property name="accelerator">&lt;Primary&gt;w</property>
+								<property name="title">Close window</property>
+							</object>
+						</child>
+						<child>
+							<object class="GtkShortcutsShortcut">
+								<property name="visible">1</property>
+								<property name="accelerator">&lt;Primary&gt;q</property>
+								<property name="title">Quit</property>
+							</object>
+						</child>
+					</object>
+				</child>
+				<child>
+					<object class="GtkShortcutsGroup">
+						<property name="visible">1</property>
+						<property name="title">Gapr Show</property>
+						<property name="view">show</property>
+						<child>
+							<object class="GtkShortcutsShortcut">
+								<property name="visible">1</property>
+								<property name="accelerator">e</property>
+								<property name="title">Hide reconstruction</property>
+							</object>
+						</child>
+						<child>
+							<object class="GtkShortcutsShortcut">
+								<property name="visible">1</property>
+								<property name="accelerator">r</property>
+								<property name="title">Load image</property>
+							</object>
+						</child>
+					</object>
+				</child>
+			</object>
+		</child>
+	</object>
+</interface>
