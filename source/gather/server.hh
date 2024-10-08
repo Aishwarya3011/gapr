@@ -23,11 +23,12 @@
 #include <string>
 #include <memory>
 
-
 namespace gapr {
 
 	class gather_server {
 		public:
+			void static logMessage(const std::string& file, const std::string& message);
+			static std::string currentDateTime();
 			struct Args {
 				std::string cwd{};
 				std::string host{};
@@ -47,7 +48,6 @@ namespace gapr {
 			struct PRIV;
 			std::shared_ptr<PRIV> _ptr;
 	};
-
 }
 
 #endif

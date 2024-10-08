@@ -774,13 +774,14 @@ struct conversion_helper {
 							token = std::move(res);
 							
 							std::cerr << "   DONE\n";
-							upload_cubes();  // Continue to the next operation
+							upload_cubes();  
 						});
 			});
 		});
 	}
 
 	void upload_downsample() {
+		Logger::instance().logMessage(__FILE__, "Entered upload_downsample: ");
 		assert(_ctx.get_executor().running_in_this_thread());
 		std::cerr<<"upload downsample ...";
 		auto ex=boost::asio::require(_ctx.get_executor(), boost::asio::execution::outstanding_work.tracked);
@@ -1027,7 +1028,9 @@ struct conversion_helper {
 		job->read_total.fetch_add(read_total);
 		job->read_cache_hit.fetch_add(read_total-read_nohit);
 	}
+	
 	void handle_slice_done(job_id id, unsigned int zz, job_st* job, file_st* file) {
+		Logger::instance().logMessage(__FILE__, "Entered handle_slice_done: ");
 		assert(_ctx.get_executor().running_in_this_thread());
 		--_n_running_io;
 		//gapr::print("handle slice [", _n_running, "]: ", id.x, "/", id.y, "/", id.z, "/", zz);
@@ -1058,7 +1061,9 @@ struct conversion_helper {
 		}
 		upload_cubes();
 	}
+
 	void handle_cube(job_id id, job_st* job) {
+		Logger::instance().logMessage(__FILE__, "Entered handle_cube: ");
 		assert(_ctx.get_executor().running_in_this_thread());
 		job->time_read_end=std::chrono::steady_clock::now();
 		gapr::print("compress cube [", _n_running, "]: ", id.x, "/", id.y, "/", id.z);
@@ -1083,7 +1088,9 @@ struct conversion_helper {
 			});
 		});
 	}
+	
 	void handle_cube_done(job_id id, job_st* job, gapr::mem_file&& file) {
+		Logger::instance().logMessage(__FILE__, "Entered handle_cube_done: ");
 		assert(_ctx.get_executor().running_in_this_thread());
 		--_n_running;
 		gapr::print("handle cube [", _n_running, "]: ", id.x, "/", id.y, "/", id.z);
@@ -1092,8 +1099,23 @@ struct conversion_helper {
 		auto t_begin=std::chrono::steady_clock::now();
 		auto f_size=file.size();
 		async_put("data/"+group+"/"+path, std::move(file), [this,job,f_size,t_begin,path](std::string&& res, const auto& hdr) {
-			if(hdr.result()!=boost::beast::http::status::ok)
-				throw std::runtime_error{std::move(res)};
+			if(hdr.result()!=boost::beast::http::status::ok){
+				// Log the Content-Length header as an integer
+				auto content_length = hdr["Content-Length"];
+				int content_length_value = 0;
+				if (!content_length.empty()) {
+					content_length_value = std::stoi(std::string(content_length));
+				}
+				Logger::instance().logMessage(__FILE__, "Content-Length: " + std::to_string(content_length_value));
+
+				// Log the Content-Type header as a string
+				auto content_type = hdr["Content-Type"];
+				Logger::instance().logMessage(__FILE__, "Content-Type: " + std::string(content_type));
+
+				// Log server error message
+				Logger::instance().logMessage(__FILE__, "Cube upload failed. Server response: " + res);
+				throw std::runtime_error{"Failed to upload cube. Server response: " + res};
+			}
 			auto t_end=std::chrono::steady_clock::now();
 
 			write_log("cube-ready %s\n", path.c_str());
@@ -1360,6 +1382,7 @@ struct conversion_helper {
 		}
 	}
 	void handle_slice_sweep_done(unsigned int zz, file_st* file) {
+		Logger::instance().logMessage(__FILE__, "Entered handle_slice_sweep_done: ");
 		assert(_ctx.get_executor().running_in_this_thread());
 		--_n_sweeping;
 		--_n_running;
@@ -1421,10 +1444,31 @@ struct conversion_helper {
 		if(std::chrono::duration_cast<std::chrono::milliseconds>(ts-_last_fetch).count()>2000) {
 			_last_fetch=ts;
 			gapr::print("get pending");
+
+			std::string url = "pending/" + group + "/" + std::to_string(_last_sync_needed);
+			Logger::instance().logMessage(__FILE__, "Requesting pending jobs from URL: " + url);
+
 			async_get("pending/"+group+"/"+std::to_string(_last_sync_needed), [this](gapr::mem_file&& file, const auto& hdr) {
-				if(hdr.result()!=boost::beast::http::status::ok)
-					//throw std::runtime_error{std::move(res)};
-					throw std::runtime_error{"asdf"};
+				// if(hdr.result()!=boost::beast::http::status::ok){
+				// 	//throw std::runtime_error{std::move(res)};
+				// 	// throw std::runtime_error{"asdf"};
+				// 	Logger::instance().logMessage(__FILE__, "Error: Server responded with an unexpected value while processing cubes.");
+				// 	throw std::runtime_error{"Unexpected server response while processing cubes.(Replacement for asdf)"};
+				// }
+				if (hdr.result() != boost::beast::http::status::ok) {
+					Logger::instance().logMessage(__FILE__, "Server responded with unexpected status.\nHTTP Status: " + std::to_string(hdr.result_int()));
+
+					Logger::instance().logMessage(__FILE__, "Logging headers:");
+					for (auto const& field : hdr) {
+						Logger::instance().logMessage(__FILE__, std::string(field.name_string()) + ": " + std::string(field.value()));
+					}
+
+					std::string body(file.map(0));
+					Logger::instance().logMessage(__FILE__, "Response Body: \n" + body);
+
+					throw std::runtime_error{"Unexpected server response while processing cubes."};
+				}
+				
 				mem_file_in str{std::move(file)};
 				std::string line;
 				while(std::getline(str, line)) {
@@ -1511,6 +1555,7 @@ struct conversion_helper {
 			handle_slice(id, zz, file, job, "que2");
 		}
 	}
+	
 	void assume_ready(job_id id) {
 		auto [it, ins]=_job_states.try_emplace(id);
 		if(ins) {

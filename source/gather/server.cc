@@ -51,6 +51,8 @@
 //#include <condition_variable>
 #include <optional>
 #include <charconv>
+#include <fstream>
+#include <sstream>
 
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/ip/tcp.hpp>
@@ -69,8 +71,6 @@
 //#include <boost/beast/http/parser.hpp>
 #include <boost/beast/core/detect_ssl.hpp>
 
-// #include "../convert/logger.h"
-
 namespace ba=boost::asio;
 namespace beast=boost::beast;
 namespace http=boost::beast::http;
@@ -78,16 +78,75 @@ namespace ssl=boost::asio::ssl;
 using tcp=ba::ip::tcp;
 using bs_error_code=boost::system::error_code;
 
+std::string gapr::gather_server::currentDateTime() {
+    auto t = std::time(nullptr);
+    auto tm = *std::localtime(&t);
+    std::ostringstream oss;
+    oss << std::put_time(&tm, "%Y-%m-%d %H:%M:%S");
+    return oss.str();
+}
+
+void gapr::gather_server::logMessage(const std::string& context, const std::string& message) {
+    std::ofstream logFile("server_log.txt", std::ios_base::app);  
+
+    if (logFile.is_open()) {
+        logFile << "[" << currentDateTime() << "] (" << context << ") " << message << std::endl;
+    } else {
+        std::cerr << "Failed to open log file." << std::endl;
+    }
+}
+
 #include "send-recv-file.hh"
 
 template<typename T, typename=std::enable_if_t<std::is_integral_v<T>>>
 inline static bool parse_http_args_impl2(std::string_view args, T& val) {
-	auto [eptr, ec]=std::from_chars(args.begin(), args.end(), val, 10);
-	if(ec!=std::errc{} || eptr!=args.end())
-		return false;
-	return true;
+	// std::string log_message = "Parsing value: " + std::string{args};
+    // gapr::gather_server::logMessage(__FILE__, log_message);
+
+    // auto [eptr, ec] = std::from_chars(args.begin(), args.end(), val, 10);
+    // if(ec != std::errc{}) {
+    //     std::string error_message = "Error during parsing: " + std::to_string(static_cast<int>(ec));
+    //     gapr::gather_server::logMessage(__FILE__, error_message);
+    //     return false;
+    // }
+    // if(eptr != args.end()) {
+    //     std::string extra_message = "Extra characters found after parsing: " + std::string{eptr, args.end()};
+    //     gapr::gather_server::logMessage(__FILE__, extra_message);
+    //     return false;
+    // }
+    // return true;
+	std::string log_message = "Parsing value (expected integer): " + std::string{args};
+    gapr::gather_server::logMessage(__FILE__, log_message);
+
+    // Find the position of the '/' character to ensure it doesn't interfere with parsing
+    auto slash_pos = args.find('/');
+    std::string_view parse_part = args;
+
+    // If a '/' exists, only parse the part before the '/'
+    if (slash_pos != std::string_view::npos) {
+        parse_part = args.substr(0, slash_pos);
+    }
+
+    auto [eptr, ec] = std::from_chars(parse_part.begin(), parse_part.end(), val, 10);
+    if(ec != std::errc{}) {
+        std::string error_message = "Error during parsing: " + std::to_string(static_cast<int>(ec));
+        gapr::gather_server::logMessage(__FILE__, error_message);
+        return false;
+    }
+
+    // Check if there are extra characters after parsing (besides the slash)
+    if(eptr != parse_part.end()) {
+        std::string extra_message = "Extra characters found after parsing: " + std::string{eptr, parse_part.end()};
+        gapr::gather_server::logMessage(__FILE__, extra_message);
+        return false;
+    }
+
+    // Log the successful parsing
+    gapr::gather_server::logMessage(__FILE__, "Successfully parsed integer: " + std::to_string(val));
+    return true;
 }
 inline static bool parse_http_args_impl2(std::string_view args, std::string& val) {
+	gapr::gather_server::logMessage(__FILE__, "Parsing value (expected string): " + std::string(args));
 	val=args;
 	return true;
 }
@@ -533,23 +592,29 @@ struct gapr::gather_server::PRIV {
 		auto ses=check_http_auth(req);
 		if(!ses)
 			return http_redirect(req, "/login.html");
-		if(ses->tier>gapr::tier::proofreader)
-			return http_redirect(req, "/locked.html");
-		if(ses->tier>gapr::tier::admin)
+		// if(ses->tier>gapr::tier::proofreader)
+		// 	return http_redirect(req, "/locked.html");
+		if(ses->tier>gapr::tier::admin || ses->tier>gapr::tier::proofreader)
 			return http_redirect(req, "/index.html");
 		return http_redirect(req, "/admin.html");
 	}
 
 	HttpResponsePtr handle_http_login(HttpConnection& conn) {
 		auto& req=conn.parser->get();
-		if(req.method()!=http::verb::post)
+		if(req.method()!=http::verb::post){
+			logMessage(__FILE__, "Invalid HTTP method for login request.");
 			return http_server_err(req);
+		}
 		std::string_view args{req.body()};
-		if(args.size()<=0)
+		if(args.size()<=0){
+			logMessage(__FILE__, "Empty body in login request.");
 			return http_server_err(req);
+		}
 		std::size_t coli=args.find(':');
-		if(coli==std::string_view::npos)
+		if(coli==std::string_view::npos){
+			logMessage(__FILE__, "Malformed login credentials in request.");
 			return http_server_err(req);
+		}
 		std::string name{&args[0], coli};
 		std::string_view password{&args[0]+coli+1, args.size()-coli-1};
 
@@ -559,22 +624,29 @@ struct gapr::gather_server::PRIV {
 		do {
 			gapr::account_reader reader{*_env, name};
 			if(!reader) {
+				logMessage(__FILE__, "User not found: " + name);
 				gapr::print("User not found: ", name);
 				break;
 			}
-			if(!reader.login(password))
+			if(!reader.login(password)){
+				logMessage(__FILE__, "Invalid password for user: " + name);
 				break;
+			}
 			authorized=true;
 			gecos=reader.gecos();
 			tier=reader.tier();
 		} while(false);
-		if(!authorized)
+		if(!authorized){
+			logMessage(__FILE__, "Unauthorized login attempt for user: " + name);
 			return http_unauthorized(req);
+		}
 
 		auto tok=gapr::gather_env::random_token(password);
 		auto [it, ins]=_http_sessions.emplace(std::move(tok), HttpSession{});
-		if(!ins)
+		if(!ins){
+			logMessage(__FILE__, "Failed to create session for user: " + name);
 			return http_server_err(req);
+		}
 		std::swap(it->second.user, name);
 		it->second.tier=tier;
 		it->second.pw_ts=std::time(nullptr);
@@ -592,22 +664,31 @@ struct gapr::gather_server::PRIV {
 			"\",\"tier\": \"", static_cast<unsigned int>(tier), "\"}"};
 		res.body()=body.str();
 		res.prepare_payload();
+		logMessage(__FILE__, "Login successful for user: " + name);
 		return make_http_response(std::move(res));
 	}
 
 	HttpResponsePtr handle_http_register(HttpConnection& conn) {
 		auto& req=conn.parser->get();
-		if(req.method()!=http::verb::post)
+		if(req.method()!=http::verb::post){
+			logMessage(__FILE__, "Invalid HTTP method for register request.");
 			return http_server_err(req);
+		}
 		std::string_view args{req.body()};
-		if(args.size()<=0)
+		if(args.size()<=0){
+			logMessage(__FILE__, "Empty body in register request.");
 			return http_server_err(req);
+		}
 		std::size_t coli=args.find(':');
-		if(coli==std::string_view::npos)
+		if(coli==std::string_view::npos){
+			logMessage(__FILE__, "Failed to parse username: malformed request.");
 			return http_server_err(req);
+		}
 		std::size_t nli=args.find('\n', coli+1);
-		if(nli==std::string_view::npos)
+		if(nli==std::string_view::npos){
+			logMessage(__FILE__, "Failed to parse password and gecos: malformed request.");
 			return http_server_err(req);
+		}
 		std::string name{&args[0], coli};
 		std::string_view password{&args[0]+coli+1, nli-coli-1};
 		std::string_view gecos{&args[0]+nli+1, args.size()-nli-1};
@@ -635,17 +716,25 @@ struct gapr::gather_server::PRIV {
 
 	HttpResponsePtr handle_http_chtier(HttpConnection& conn) {
 		auto& req=conn.parser->get();
-		if(req.method()!=http::verb::post)
+		if(req.method()!=http::verb::post){
+			logMessage(__FILE__, "Invalid HTTP method for tier change request.");
 			return http_server_err(req);
+		}
 		auto ses=check_http_auth(req);
-		if(!ses)
+		if(!ses){
+			logMessage(__FILE__, "Unauthorized tier change request.");
 			return http_unauthorized(req);
-		if(ses->tier>gapr::tier::admin)
+		}
+		if(ses->tier>gapr::tier::admin){
+			logMessage(__FILE__, "Insufficient permissions for tier change.");
 			return http_unauthorized(req);
+		}
 
 		std::string_view args{req.body()};
-		if(args.size()<=0)
+		if(args.size()<=0){
+			logMessage(__FILE__, "Empty body in tier change request.");
 			return http_server_err(req);
+		}
 		std::vector<std::pair<std::string, gapr::tier>> chgs;
 		while(args.size()>0) {
 			if(args[0]=='\n') {
@@ -653,17 +742,25 @@ struct gapr::gather_server::PRIV {
 				continue;
 			}
 			std::size_t coli=args.find(':');
-			if(coli==std::string_view::npos)
+			if(coli==std::string_view::npos){
+				logMessage(__FILE__, "Malformed tier change request.");
 				return http_server_err(req);
+			}
 			unsigned int tgt_tier_i;
 			auto r=gapr::make_parser(tgt_tier_i).from_dec(&args[0]+coli+1, args.size()-coli-1);
-			if(!r.second)
+			if(!r.second){
+				logMessage(__FILE__, "Failed to parse tier level.");
 				return http_server_err(req);
-			if(r.first>=args.size()-coli-1 || args[coli+1+r.first]!='\n')
+			}
+			if(r.first>=args.size()-coli-1 || args[coli+1+r.first]!='\n'){
+				logMessage(__FILE__, "Malformed tier change request.");
 				return http_server_err(req);
+			}
 			auto tgt_tier=static_cast<gapr::tier>(tgt_tier_i);
-			if(tgt_tier<ses->tier)
+			if(tgt_tier<ses->tier){
+				logMessage(__FILE__, "Insufficient permissions for requested tier level.");
 				return http_unauthorized(req);
+			}
 			chgs.emplace_back(std::string{&args[0], coli}, tgt_tier);
 			args.remove_prefix(r.first+1+coli+1);
 		}
@@ -691,8 +788,10 @@ struct gapr::gather_server::PRIV {
 
 	HttpResponsePtr handle_http_chstage(HttpConnection& conn) {
 		auto& req=conn.parser->get();
-		if(req.method()!=http::verb::post)
+		if(req.method()!=http::verb::post){
+			logMessage(__FILE__, "Invalid HTTP method for chstage request.");
 			return http_server_err(req);
+		}
 		auto ses=check_http_auth(req);
 		if(!ses)
 			return http_unauthorized(req);
@@ -700,8 +799,10 @@ struct gapr::gather_server::PRIV {
 			return http_unauthorized(req);
 
 		std::string_view args{req.body()};
-		if(args.size()<=0)
+		if(args.size()<=0){
+			logMessage(__FILE__, "Empty body in chstage request.");
 			return http_server_err(req);
+		}
 		std::vector<std::pair<std::string, gapr::stage>> chgs;
 		while(args.size()>0) {
 			if(args[0]=='\n') {
@@ -709,14 +810,20 @@ struct gapr::gather_server::PRIV {
 				continue;
 			}
 			std::size_t coli=args.find(':');
-			if(coli==std::string_view::npos)
+			if(coli==std::string_view::npos){
+				logMessage(__FILE__, "Failed to parse chstage: missing colon separator.");
 				return http_server_err(req);
+			}
 			unsigned int tgt_stage_i;
 			auto r=gapr::make_parser(tgt_stage_i).from_dec(&args[0]+coli+1, args.size()-coli-1);
-			if(!r.second)
+			if(!r.second){
+				logMessage(__FILE__, "Failed to parse target stage in chstage request.");
 				return http_server_err(req);
-			if(r.first>=args.size()-coli-1 || args[coli+1+r.first]!='\n')
+			}
+			if(r.first>=args.size()-coli-1 || args[coli+1+r.first]!='\n'){
+				logMessage(__FILE__, "Malformed target stage in chstage request.");
 				return http_server_err(req);
+			}
 			auto tgt_stage=static_cast<gapr::stage>(tgt_stage_i);
 			chgs.emplace_back(std::string{&args[0], coli}, tgt_stage);
 			args.remove_prefix(r.first+1+coli+1);
@@ -745,8 +852,10 @@ struct gapr::gather_server::PRIV {
 
 	HttpResponsePtr handle_http_stats(HttpConnection& conn) {
 		auto& req=conn.parser->get();
-		if(req.method()!=http::verb::get)
+		if(req.method()!=http::verb::get){
+			logMessage(__FILE__, "Invalid HTTP method for stats request.");
 			return http_server_err(req);
+		}
 #if 0
 		auto ses=check_http_auth(req);
 		if(!ses)
@@ -758,12 +867,16 @@ struct gapr::gather_server::PRIV {
 		std::string proj;
 		gapr::commit_id::data_type start=0;
 		gapr::commit_id::data_type count=0;
-		if(!parse_http_args(conn.api_args, proj, nullptr, start, count))
+		if(!parse_http_args(conn.api_args, proj, nullptr, start, count)){
+			logMessage(__FILE__, "Failed to parse HTTP arguments for stats request.");
 			return http_server_err(req);
+		}
 
 		auto it_model=_models.find(proj);
-		if(it_model==_models.end())
+		if(it_model==_models.end()){
+			logMessage(__FILE__, "Model not found for project: " + proj);
 			return http_server_err(req);
+		}
 		auto model=it_model->second.model;
 		gapr::promise<std::string> prom{};
 		auto fut=prom.get_future();
@@ -779,8 +892,10 @@ struct gapr::gather_server::PRIV {
 		auto ex=_io_ctx.get_executor();
 		std::move(fut).async_wait(ex, [this,conn=conn.shared_from_this(),&req](gapr::likely<std::string>&& r) mutable {
 			if(!r) try {
+				logMessage(__FILE__, "Error retrieving stats data.");
 				return write_response(*conn, http_server_err(req));
 			} catch(const std::runtime_error& e) {
+				logMessage(__FILE__, "Runtime error while processing stats: " + std::string(e.what()));
 				return write_response(*conn, http_server_err(req));
 			}
 			http::response<http::string_body> res{http::status::ok, req.version()};
@@ -796,8 +911,10 @@ struct gapr::gather_server::PRIV {
 
 	HttpResponsePtr handle_http_proofread_stats(HttpConnection& conn) {
 		auto& req=conn.parser->get();
-		if(req.method()!=http::verb::get)
+		if(req.method()!=http::verb::get){
+			logMessage(__FILE__, "Invalid HTTP method for proofread stats request.");
 			return http_server_err(req);
+		}
 #if 0
 		auto ses=check_http_auth(req);
 		if(!ses)
@@ -809,12 +926,16 @@ struct gapr::gather_server::PRIV {
 		std::string proj;
 		gapr::commit_id start{0};
 		gapr::commit_id to{0};
-		if(!parse_http_args(conn.api_args, proj, nullptr, start.data, to.data))
+		if(!parse_http_args(conn.api_args, proj, nullptr, start.data, to.data)){
+			logMessage(__FILE__, "Failed to parse HTTP arguments for proofread stats request.");
 			return http_server_err(req);
+		}
 
 		auto it_model=_models.find(proj);
-		if(it_model==_models.end())
+		if(it_model==_models.end()){
+			logMessage(__FILE__, "Model not found for project: " + proj);
 			return http_server_err(req);
+		}
 		auto model=it_model->second.model;
 		gapr::promise<std::string> prom{};
 		auto fut=prom.get_future();
@@ -830,8 +951,10 @@ struct gapr::gather_server::PRIV {
 		auto ex=_io_ctx.get_executor();
 		std::move(fut).async_wait(ex, [this,conn=conn.shared_from_this(),&req](gapr::likely<std::string>&& r) mutable {
 			if(!r) try {
+				logMessage(__FILE__, "Error retrieving proofread stats data.");
 				return write_response(*conn, http_server_err(req));
 			} catch(const std::runtime_error& e) {
+				logMessage(__FILE__, "Runtime error while processing proofread stats: " + std::string(e.what()));
 				return write_response(*conn, http_server_err(req));
 			}
 			http::response<http::string_body> res{http::status::ok, req.version()};
@@ -847,8 +970,13 @@ struct gapr::gather_server::PRIV {
 
 	HttpResponsePtr handle_http_catalog(HttpConnection& conn) {
 		auto& req=conn.parser->get();
-		if(req.method()!=http::verb::get && req.method()!=http::verb::put)
+
+		logMessage(__FILE__, "Received HTTP catalog request.");
+
+		if(req.method()!=http::verb::get && req.method()!=http::verb::put){
+			logMessage(__FILE__, "Invalid HTTP method for catalog request.");
 			return http_server_err(req);
+		}
 #if 0
 		auto ses=check_http_auth(req);
 		if(!ses)
@@ -859,71 +987,60 @@ struct gapr::gather_server::PRIV {
 
 		std::string proj;
 		std::string passwd;
-		if(!parse_http_args(conn.api_args, proj, passwd))
+		logMessage(__FILE__, "Raw API arguments: " + std::string(conn.api_args));
+
+		if(!parse_http_args(conn.api_args, proj, passwd)){
+			logMessage(__FILE__, "Failed to parse HTTP arguments for catalog request.");
 			return http_server_err(req);
+		}
+
+		logMessage(__FILE__, "Parsed project: " + proj);
 
 		if(req.method()==http::verb::get) {
+			logMessage(__FILE__, "Handling GET request for catalog.");
+
 			auto path2=_env->image_catalog(proj);
-			if(path2.empty())
+			if(path2.empty()){
+				logMessage(__FILE__, "Failed to locate catalog for project: " + proj);
 				return http_server_err(req);
+			}
 			return handle_data_request_impl(req, path2);
 		}
+
+		logMessage(__FILE__, "Handling PUT request for catalog.");
 
 		std::string err{};
 		std::string token;
 		try {
 			{
+				logMessage(__FILE__, "Writing catalog to file for project: " + proj);
+
 				std::ofstream fcat{_env->image_catalog(proj, false)};
 				fcat<<req.body();
 				fcat.close();
-				if(!fcat)
+				if(!fcat){
+					logMessage(__FILE__, "Failed to write catalog to file for project: " + proj);
 					throw std::runtime_error{"failed to write catalog"};
+				}
 			}
+			logMessage(__FILE__, "Catalog file written successfully for project: " + proj);
+
 			gapr::pw_hash hash;
 			token.resize(hash.size()*2);
 			gapr::gather_env::prepare_secret(hash, passwd);
 			dump_binary(&token[0], &hash[0], hash.size());
 			gapr::print(1, "token: ", token);
 			gapr::project_writer writer{*_env, proj, hash, ""};
-			if(!writer)
+			if(!writer){
+				logMessage(__FILE__, "Failed to create project writer for project: " + proj);
 				gapr::report("Project not created: ", proj);
+			}
 			gapr::print(1, "created: ", token);
+			logMessage(__FILE__, "Catalog uploaded and project created successfully for project: " + proj);
 		} catch(const std::runtime_error& e) {
 			gapr::print(1, "err: ", e.what());
 			err=e.what();
 		}
-		// try {
-		// 	Logger::instance().logMessage(__FILE__, "Received catalog upload request for project: " + proj);
-			
-		// 	std::ofstream fcat{_env->image_catalog(proj, false)};
-		// 	if (!fcat.is_open()) {
-		// 		throw std::runtime_error{"Failed to open catalog file for writing."};
-		// 	}
-
-		// 	fcat << req.body();
-		// 	fcat.close();
-
-		// 	if (!fcat) {
-		// 		throw std::runtime_error{"Failed to write catalog to file."};
-		// 	}
-			
-		// 	// Generate token for project authentication
-		// 	gapr::pw_hash hash;
-		// 	token.resize(hash.size() * 2);
-		// 	gapr::gather_env::prepare_secret(hash, passwd);
-		// 	dump_binary(&token[0], &hash[0], hash.size());
-
-		// 	gapr::project_writer writer{*_env, proj, hash, ""};
-		// 	if (!writer) {
-		// 		throw std::runtime_error{"Project not created or found: " + proj};
-		// 	}
-
-		// 	Logger::instance().logMessage(__FILE__, "Catalog uploaded and project created successfully.");
-
-		// } catch (const std::runtime_error& e) {
-		// 	Logger::instance().logMessage(__FILE__, "Error during catalog upload: " + std::string(e.what()));
-		// 	err = e.what();
-		// }
 
 		http::response<http::string_body> res{err.empty()?http::status::ok:http::status::internal_server_error, req.version()};
 		res.set(http::field::server, _env->http_server());
@@ -931,6 +1048,11 @@ struct gapr::gather_server::PRIV {
 		res.keep_alive(req.keep_alive());
 		res.body()=err.empty()?token:err;
 		res.prepare_payload();
+
+		if (!err.empty()) {
+        	logMessage(__FILE__, "Responding with error: " + err);
+    	}
+
 		return make_http_response(std::move(res));
 	}
 
@@ -989,8 +1111,10 @@ struct gapr::gather_server::PRIV {
 			auto conn_next=std::move(conn->next);
 			boost::asio::post(_io_ctx, [this,conn=std::move(conn),data]() {
 				auto& req=conn->parser->get();
-				if(data.empty())
+				if(data.empty()){
+					logMessage(__FILE__, "Data is empty for pending data dispatch, sending HTTP server error.");
 					return write_response(*conn, http_server_err(req));
+				}
 				auto resptr=handle_data_request_impl(req, data);
 				write_response(*conn, std::move(resptr));
 			});
@@ -1050,10 +1174,13 @@ struct gapr::gather_server::PRIV {
 			pending_data_schedule(proj, relp);
 		}
 	}
+	
 	HttpResponsePtr handle_http_data(HttpConnection& conn) {
 		auto& req=conn.parser->get();
-		if(req.method()!=http::verb::get && req.method()!=http::verb::put)
+		if(req.method()!=http::verb::get && req.method()!=http::verb::put){
+			logMessage(__FILE__, "Invalid HTTP method for data request.");
 			return http_server_err(req);
+		}
 #if 0
 		auto ses=check_http_auth(req);
 		if(!ses)
@@ -1064,8 +1191,10 @@ struct gapr::gather_server::PRIV {
 
 		std::string proj;
 		std::string relp;
-		if(!parse_http_args(conn.api_args, proj, relp))
+		if(!parse_http_args(conn.api_args, proj, relp)){
+			logMessage(__FILE__, "Failed to parse HTTP arguments for data request.");
 			return http_server_err(req);
+		}
 
 		if(req.method()==http::verb::get) {
 			auto path2=_env->image_data(proj, relp);
@@ -1109,8 +1238,12 @@ struct gapr::gather_server::PRIV {
 
 	HttpResponsePtr handle_http_pending(HttpConnection& conn) {
 		auto& req=conn.parser->get();
-		if(req.method()!=http::verb::get)
+		if(req.method()!=http::verb::get){
+			logMessage(__FILE__, "Invalid HTTP method for pending request.");
 			return http_server_err(req);
+		}
+
+		logMessage(__FILE__, "Raw API arguments for pending request: " + std::string(conn.api_args));
 #if 0
 		auto ses=check_http_auth(req);
 		if(!ses)
@@ -1121,18 +1254,23 @@ struct gapr::gather_server::PRIV {
 
 		std::string proj;
 		uint64_t ts_sync{0};
-		if(!parse_http_args(conn.api_args, proj, nullptr, ts_sync))
+		if(!parse_http_args(conn.api_args, proj, nullptr, ts_sync)){
+			logMessage(__FILE__, "Failed to parse HTTP arguments for pending request.");
 			return http_server_err(req);
+		}
 
 		std::string err{};
 		std::ostringstream str;
 		assert(_io_ctx.get_executor().running_in_this_thread());
 		try {
+			logMessage(__FILE__, "Processing pending data for project: " + proj + " with ts_sync: " + std::to_string(ts_sync));
+
 			_models.at(proj).pending_ts=std::chrono::steady_clock::now();
 			pending_data_get(proj, str, ts_sync);
 		} catch(const std::runtime_error& e) {
 			gapr::print(1, "err: ", e.what());
 			err=e.what();
+			logMessage(__FILE__, "Runtime error while processing pending data: " + err);
 		}
 
 		http::response<http::string_body> res{err.empty()?http::status::ok:http::status::internal_server_error, req.version()};
@@ -1148,8 +1286,10 @@ struct gapr::gather_server::PRIV {
 
 	HttpResponsePtr handle_http_rank(HttpConnection& conn) {
 		auto& req=conn.parser->get();
-		if(req.method()!=http::verb::get)
+		if(req.method()!=http::verb::get){
+			logMessage(__FILE__, "Invalid HTTP method for rank request.");
 			return http_server_err(req);
+		}
 #if 0
 		auto ses=check_http_auth(req);
 		if(!ses)
@@ -1159,8 +1299,10 @@ struct gapr::gather_server::PRIV {
 #endif
 
 		std::string_view args{req.body()};
-		if(args.size()>0)
+		if(args.size()>0){
+			logMessage(__FILE__, "Unexpected body in rank request.");
 			return http_server_err(req);
+		}
 
 		std::vector<std::pair<std::string, std::shared_ptr<gather_model>>> todo;
 		for(auto& [proj, state]: _models)
@@ -1207,8 +1349,10 @@ struct gapr::gather_server::PRIV {
 		std::move(fut).async_wait(ex, [this,conn=conn.shared_from_this(),&req](gapr::likely<std::string>&& r) mutable {
 			auto& req=conn->parser->get();
 			if(!r) try {
+				logMessage(__FILE__, "Rank request failed, sending HTTP server error.");
 				return write_response(*conn, http_server_err(req));
 			} catch(const std::runtime_error& e) {
+				logMessage(__FILE__, std::string("Error during rank response: ") + e.what());
 				return write_response(*conn, http_server_err(req));
 			}
 			http::response<http::string_body> res{http::status::ok, req.version()};
@@ -1224,8 +1368,10 @@ struct gapr::gather_server::PRIV {
 
 	HttpResponsePtr handle_http_progress(HttpConnection& conn) {
 		auto& req=conn.parser->get();
-		if(req.method()!=http::verb::get)
+		if(req.method()!=http::verb::get){
+			logMessage(__FILE__, "Invalid HTTP method for progress request.");
 			return http_server_err(req);
+		}
 #if 0
 		auto ses=check_http_auth(req);
 		if(!ses)
@@ -1235,8 +1381,10 @@ struct gapr::gather_server::PRIV {
 #endif
 
 		std::string_view args{req.body()};
-		if(args.size()>0)
+		if(args.size()>0){
+			logMessage(__FILE__, "Unexpected body in progress request.");
 			return http_server_err(req);
+		}
 
 		std::vector<std::pair<std::string, std::shared_ptr<gather_model>>> todo;
 		std::unordered_map<std::string, std::chrono::steady_clock::time_point> last_pendings;
@@ -1294,8 +1442,10 @@ struct gapr::gather_server::PRIV {
 		std::move(fut).async_wait(ex, [this,conn=conn.shared_from_this(),&req](gapr::likely<std::string>&& r) mutable {
 			auto& req=conn->parser->get();
 			if(!r) try {
+				logMessage(__FILE__, "Progress request failed, sending HTTP server error.");
 				return write_response(*conn, http_server_err(req));
 			} catch(const std::runtime_error& e) {
+				logMessage(__FILE__, std::string("Error during progress response: ") + e.what());
 				return write_response(*conn, http_server_err(req));
 			}
 
@@ -1341,6 +1491,7 @@ struct gapr::gather_server::PRIV {
 			return http_not_found(req);
 		if(ec) {
 			gapr::print("http server err: ", ec.message());
+			logMessage(__FILE__, "HTTP server error while opening file: " + ec.message());
 			return http_server_err(req);
 		}
 		const auto size=body.size();
@@ -1963,8 +2114,10 @@ void gapr::gather_server::PRIV::handle_api_request(HttpConnection& conn) {
 
 	std::string api_tgt{target};
 	auto it=_http_apis.find(api_tgt);
-	if(it==_http_apis.end())
+	if(it==_http_apis.end()){
+		logMessage(__FILE__, "API endpoint not found: " + api_tgt);
 		return write_response(conn, http_server_err(req));
+	}
 
 	auto res=(this->*(it->second))(conn);
 	if(res)
