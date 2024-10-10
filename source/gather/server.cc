@@ -87,7 +87,9 @@ std::string gapr::gather_server::currentDateTime() {
 }
 
 void gapr::gather_server::logMessage(const std::string& context, const std::string& message) {
-    std::ofstream logFile("server_log.txt", std::ios_base::app);  
+	// std::string filename = "server_log_" + currentDateTime() + ".txt";
+	// std::ofstream logFile(filename, std::ios_base::app); 
+	std::ofstream logFile("server_log.txt", std::ios_base::app);  
 
     if (logFile.is_open()) {
         logFile << "[" << currentDateTime() << "] (" << context << ") " << message << std::endl;
@@ -100,10 +102,10 @@ void gapr::gather_server::logMessage(const std::string& context, const std::stri
 
 template<typename T, typename=std::enable_if_t<std::is_integral_v<T>>>
 inline static bool parse_http_args_impl2(std::string_view args, T& val) {
-	// std::string log_message = "Parsing value: " + std::string{args};
-    // gapr::gather_server::logMessage(__FILE__, log_message);
+	std::string log_message = "Parsing value: " + std::string{args};
+    gapr::gather_server::logMessage(__FILE__, log_message);
 
-    // auto [eptr, ec] = std::from_chars(args.begin(), args.end(), val, 10);
+    auto [eptr, ec] = std::from_chars(args.begin(), args.end(), val, 10);
     // if(ec != std::errc{}) {
     //     std::string error_message = "Error during parsing: " + std::to_string(static_cast<int>(ec));
     //     gapr::gather_server::logMessage(__FILE__, error_message);
@@ -114,39 +116,35 @@ inline static bool parse_http_args_impl2(std::string_view args, T& val) {
     //     gapr::gather_server::logMessage(__FILE__, extra_message);
     //     return false;
     // }
-    // return true;
-	std::string log_message = "Parsing value (expected integer): " + std::string{args};
-    gapr::gather_server::logMessage(__FILE__, log_message);
-
-    // Find the position of the '/' character to ensure it doesn't interfere with parsing
-    auto slash_pos = args.find('/');
-    std::string_view parse_part = args;
-
-    // If a '/' exists, only parse the part before the '/'
-    if (slash_pos != std::string_view::npos) {
-        parse_part = args.substr(0, slash_pos);
-    }
-
-    auto [eptr, ec] = std::from_chars(parse_part.begin(), parse_part.end(), val, 10);
-    if(ec != std::errc{}) {
-        std::string error_message = "Error during parsing: " + std::to_string(static_cast<int>(ec));
-        gapr::gather_server::logMessage(__FILE__, error_message);
-        return false;
-    }
-
-    // Check if there are extra characters after parsing (besides the slash)
-    if(eptr != parse_part.end()) {
-        std::string extra_message = "Extra characters found after parsing: " + std::string{eptr, parse_part.end()};
-        gapr::gather_server::logMessage(__FILE__, extra_message);
-        return false;
-    }
-
-    // Log the successful parsing
-    gapr::gather_server::logMessage(__FILE__, "Successfully parsed integer: " + std::to_string(val));
     return true;
+
+	// std::string log_message = "Parsing value (expected integer): " + std::string{args};
+    // gapr::gather_server::logMessage(__FILE__, log_message);
+
+    // auto slash_pos = args.find('/');
+    // std::string_view parse_part = args;
+
+    // if (slash_pos != std::string_view::npos) {
+    //     parse_part = args.substr(0, slash_pos);
+    // }
+
+    // auto [eptr, ec] = std::from_chars(parse_part.begin(), parse_part.end(), val, 10);
+    // if(ec != std::errc{}) {
+    //     std::string error_message = "Error during parsing: " + std::to_string(static_cast<int>(ec));
+    //     gapr::gather_server::logMessage(__FILE__, error_message);
+    //     return false;
+    // }
+
+    // if(eptr != parse_part.end()) {
+    //     std::string extra_message = "Extra characters found after parsing: " + std::string{eptr, parse_part.end()};
+    //     gapr::gather_server::logMessage(__FILE__, extra_message);
+    //     return false;
+    // }
+
+    // gapr::gather_server::logMessage(__FILE__, "Successfully parsed integer: " + std::to_string(val));
+    // return true;
 }
 inline static bool parse_http_args_impl2(std::string_view args, std::string& val) {
-	gapr::gather_server::logMessage(__FILE__, "Parsing value (expected string): " + std::string(args));
 	val=args;
 	return true;
 }
@@ -286,7 +284,6 @@ static beast::string_view mime_type(beast::string_view path) {
 	return "application/octet-stream";
 }
 
-
 struct gapr::gather_server::PRIV {
 
 	std::shared_ptr<gapr::gather_env> _env;
@@ -344,6 +341,9 @@ struct gapr::gather_server::PRIV {
 		std::shared_ptr<gather_model> model;
 		gapr::mem_file state;
 		std::chrono::steady_clock::time_point pending_ts;
+
+		ModelState() : model(nullptr), state{}, pending_ts{} { }
+
 		explicit ModelState(std::shared_ptr<gather_model>&& model): model{std::move(model)}, state{}, pending_ts{} { }
 	};
 	std::unordered_map<std::string, ModelState> _models;
@@ -1083,25 +1083,51 @@ struct gapr::gather_server::PRIV {
 			it->second.first={};
 		}
 	}
+	
 	void pending_data_get(const std::string& proj, std::ostream& str, uint64_t ts_sync) {
-		auto it_end=_pending_data_reqs.end();
+		//logMessage(__FILE__, "Starting pending_data_get for project: " + proj);
+		
+		auto it_end = _pending_data_reqs.end();
 		std::vector<decltype(it_end)> iters;
-		for(auto it=_pending_data_reqs.begin(); it!=it_end; ++it) {
-			if(it->first.first==proj)
-				iters.emplace_back(it);
-		}
-		std::sort(iters.begin(), iters.end(), [](auto a, auto b) {
-			return a->second.second<b->second.second;
-		});
 
-		for(auto it: iters) {
-			if(it->second.second<=ts_sync && !it->second.first) {
+		// Log the size of _pending_data_reqs before processing
+		//logMessage(__FILE__, "Pending data requests size: " + std::to_string(_pending_data_reqs.size()));
+
+		for (auto it = _pending_data_reqs.begin(); it != it_end; ++it) {
+			if (it->first.first == proj) {
+				logMessage(__FILE__, "Matching project found in pending data requests: " + it->first.first);
+				iters.emplace_back(it);
+			}
+		}
+
+		// Log the number of matched entries for sorting
+		//logMessage(__FILE__, "Number of matching entries for project " + proj + ": " + std::to_string(iters.size()));
+
+		// Sorting the matched entries
+		std::sort(iters.begin(), iters.end(), [](auto a, auto b) {
+			return a->second.second < b->second.second;
+		});
+		//logMessage(__FILE__, "Sorted matching entries by timestamp for project: " + proj);
+
+		// Process each entry in iters
+		for (auto it : iters) {
+			logMessage(__FILE__, "Processing entry with timestamp: " + std::to_string(it->second.second) + " for key: " + it->first.second);
+			
+			// If the condition matches, erase the entry
+			if (it->second.second <= ts_sync && !it->second.first) {
+				logMessage(__FILE__, "Erasing pending data request for project: " + proj + ", key: " + it->first.second);
 				_pending_data_reqs.erase(it);
 				continue;
 			}
-			str<<it->second.second<<":"<<it->first.second<<"\n";
+
+			// Log the output being added to the stream
+			str << it->second.second << ":" << it->first.second << "\n";
+			logMessage(__FILE__, "Added data to stream for project: " + proj + ", timestamp: " + std::to_string(it->second.second) + ", key: " + it->first.second);
 		}
+
+		//logMessage(__FILE__, "Finished processing pending data for project: " + proj);
 	}
+
 	void pending_data_dispatch(const std::string& proj, const std::string& path, const std::string& data) {
 		auto it=_pending_data_reqs.find({proj, path});
 		if(it==_pending_data_reqs.end())
@@ -1243,7 +1269,7 @@ struct gapr::gather_server::PRIV {
 			return http_server_err(req);
 		}
 
-		logMessage(__FILE__, "Raw API arguments for pending request: " + std::string(conn.api_args));
+		// logMessage(__FILE__, "Raw API arguments for pending request: " + std::string(conn.api_args));
 #if 0
 		auto ses=check_http_auth(req);
 		if(!ses)
@@ -1263,13 +1289,31 @@ struct gapr::gather_server::PRIV {
 		std::ostringstream str;
 		assert(_io_ctx.get_executor().running_in_this_thread());
 		try {
-			logMessage(__FILE__, "Processing pending data for project: " + proj + " with ts_sync: " + std::to_string(ts_sync));
+			// logMessage(__FILE__, "Processing pending data for project: " + proj + " with ts_sync: " + std::to_string(ts_sync));
 
-			_models.at(proj).pending_ts=std::chrono::steady_clock::now();
+			// Log before attempting to update _models
+			//logMessage(__FILE__, "Attempting to update pending timestamp for project: " + proj);
+
+			std::shared_ptr<gather_model> model = std::make_shared<gather_model>();
+			_models[proj] = ModelState(std::move(model));
+			_models[proj].pending_ts = std::chrono::steady_clock::now();
+			//logMessage(__FILE__, "Project successfully added to _models: " + proj);
+
+			_models.at(proj).pending_ts = std::chrono::steady_clock::now();
+
+			// Log before calling pending_data_get
+			//logMessage(__FILE__, "Calling pending_data_get for project: " + proj);
+
 			pending_data_get(proj, str, ts_sync);
-		} catch(const std::runtime_error& e) {
+			
+			// Log after calling pending_data_get
+			// logMessage(__FILE__, "Returned from pending_data_get for project: " + proj);
+		} catch (const std::out_of_range& e) {
+			logMessage(__FILE__, "Project not found in _models: " + proj);
+			err = e.what();
+		} catch (const std::runtime_error& e) {
 			gapr::print(1, "err: ", e.what());
-			err=e.what();
+			err = e.what();
 			logMessage(__FILE__, "Runtime error while processing pending data: " + err);
 		}
 
@@ -1367,96 +1411,127 @@ struct gapr::gather_server::PRIV {
 	}
 
 	HttpResponsePtr handle_http_progress(HttpConnection& conn) {
-		auto& req=conn.parser->get();
-		if(req.method()!=http::verb::get){
+		auto& req = conn.parser->get();
+		if (req.method() != http::verb::get) {
 			logMessage(__FILE__, "Invalid HTTP method for progress request.");
 			return http_server_err(req);
 		}
-#if 0
-		auto ses=check_http_auth(req);
-		if(!ses)
-			return http_unauthorized(req);
-		if(ses->tier>gapr::tier::admin)
-			return http_unauthorized(req);
-#endif
 
 		std::string_view args{req.body()};
-		if(args.size()>0){
+		if (args.size() > 0) {
 			logMessage(__FILE__, "Unexpected body in progress request.");
 			return http_server_err(req);
 		}
 
 		std::vector<std::pair<std::string, std::shared_ptr<gather_model>>> todo;
 		std::unordered_map<std::string, std::chrono::steady_clock::time_point> last_pendings;
+		
+		// Log to check if the thread context is correct
+		logMessage(__FILE__, "Checking if running in the correct thread context.");
 		assert(_io_ctx.get_executor().running_in_this_thread());
-		for(auto& [proj, state]: _models) {
+
+		// Logging each project's model being added to todo and last_pendings
+		for (auto& [proj, state] : _models) {
+			logMessage(__FILE__, "Processing project: " + proj);
 			todo.emplace_back(proj, state.model);
 			last_pendings.emplace(proj, state.pending_ts);
+			logMessage(__FILE__, "Added project " + proj + " to last_pendings with timestamp.");
 		}
 
 		gapr::promise<std::string> prom{};
-		auto fut=prom.get_future();
-		ba::post(_thr_pool, [this,prom=std::move(prom),todo=std::move(todo),last_pendings=std::move(last_pendings)]() mutable {
+		auto fut = prom.get_future();
+
+		    ba::post(_thr_pool, [this, prom = std::move(prom), todo = std::move(todo), last_pendings = std::move(last_pendings)]() mutable {
 			try {
-				auto steady_ts=std::chrono::steady_clock::now();
-				auto ts=std::chrono::system_clock::to_time_t(maybe_update(std::move(todo)));
+				auto steady_ts = std::chrono::steady_clock::now();
+				logMessage(__FILE__, "Current steady timestamp captured.");
+
+				// Maybe update todo and fetch a time value
+				auto ts = std::chrono::system_clock::to_time_t(maybe_update(std::move(todo)));
+				logMessage(__FILE__, "Updated todo list and fetched system timestamp.");
+
 				std::unique_lock<std::mutex> lck;
-				auto& progs=_stats.per_grp(lck);
+				auto& progs = _stats.per_grp(lck);
+				logMessage(__FILE__, "Fetched progress statistics per group.");
+
 				std::ostringstream oss;
-				oss<<"{\"time\":\"";
+				oss << "{\"time\":\"";
 				char time_str[128];
-				auto n=std::strftime(time_str, sizeof(time_str), "%Y-%m-%d %H:%M:%S %z", std::localtime(&ts));
-				if(n>0)
+				auto n = std::strftime(time_str, sizeof(time_str), "%Y-%m-%d %H:%M:%S %z", std::localtime(&ts));
+				if (n > 0) {
 					oss.write(time_str, n);
-				else
-					oss<<"ERR";
-				bool first=true;
-				oss<<"\",\"stats\":[";
-				for(auto& prog: progs) {
-					if(first) {
-						first=false;
-					} else {
-						oss<<',';
-					}
-					oss<<"{\"g\":\""<<prog.name;
-					oss<<"\",\"nn\":"<<prog.num_nodes;
-					oss<<",\"nnr\":"<<prog.num_nodes_raw;
-					oss<<",\"nt\":"<<prog.num_terms;
-					oss<<",\"ntr\":"<<prog.num_terms_raw;
-					auto last_pending=std::chrono::duration_cast<std::chrono::milliseconds>(steady_ts-last_pendings.at(prog.name)).count();
-					assert(last_pending>=0);
-					if(last_pending<120'000)
-						oss<<",\"lp\":"<<last_pending/1000.0;
-					oss<<",\"c\":"<<prog.num_commits;
-					oss<<",\"cd\":"<<prog.num_commits_d;
-					oss<<",\"cm\":"<<prog.num_commits_m<<"}";
+				} else {
+					logMessage(__FILE__, "Failed to format the timestamp.");
+					oss << "ERR";
 				}
-				oss<<"]}";
+				
+				bool first = true;
+				oss << "\",\"stats\":[";
+				for (auto& prog : progs) {
+					if (first) {
+						first = false;
+					} else {
+						oss << ',';
+					}
+
+					// Logging each program's progress information
+					logMessage(__FILE__, "Processing progress for program: " + prog.name);
+
+					oss << "{\"g\":\"" << prog.name;
+					oss << "\",\"nn\":" << prog.num_nodes;
+					oss << ",\"nnr\":" << prog.num_nodes_raw;
+					oss << ",\"nt\":" << prog.num_terms;
+					oss << ",\"ntr\":" << prog.num_terms_raw;
+
+					// Log key before accessing the unordered_map and catch potential out_of_range errors
+					logMessage(__FILE__, "Accessing last pending timestamp for project: " + prog.name);
+					auto last_pending = std::chrono::duration_cast<std::chrono::milliseconds>(steady_ts - last_pendings.at(prog.name)).count();
+					assert(last_pending >= 0);
+					logMessage(__FILE__, "Last pending time for project " + prog.name + ": " + std::to_string(last_pending) + " ms.");
+
+					if (last_pending < 120'000) {
+						oss << ",\"lp\":" << last_pending / 1000.0;
+					}
+					oss << ",\"c\":" << prog.num_commits;
+					oss << ",\"cd\":" << prog.num_commits_d;
+					oss << ",\"cm\":" << prog.num_commits_m << "}";
+				}
+				oss << "]}";
+				logMessage(__FILE__, "Generated JSON response for progress data.");
+
 				std::move(prom).set(oss.str());
-			} catch(const std::runtime_error&) {
+			} catch (const std::out_of_range& e) {
+				logMessage(__FILE__, std::string("Out of range error: ") + e.what());
+				unlikely(std::move(prom), std::current_exception());
+			} catch (const std::runtime_error& e) {
+				logMessage(__FILE__, std::string("Runtime error during progress update: ") + e.what());
 				unlikely(std::move(prom), std::current_exception());
 			}
 		});
 
-		auto ex=conn.ssl->get_executor();
-		std::move(fut).async_wait(ex, [this,conn=conn.shared_from_this(),&req](gapr::likely<std::string>&& r) mutable {
-			auto& req=conn->parser->get();
-			if(!r) try {
-				logMessage(__FILE__, "Progress request failed, sending HTTP server error.");
-				return write_response(*conn, http_server_err(req));
-			} catch(const std::runtime_error& e) {
-				logMessage(__FILE__, std::string("Error during progress response: ") + e.what());
-				return write_response(*conn, http_server_err(req));
+		auto ex = conn.ssl->get_executor();
+		std::move(fut).async_wait(ex, [this, conn = conn.shared_from_this(), &req](gapr::likely<std::string>&& r) mutable {
+			auto& req = conn->parser->get();
+			if (!r) {
+				try {
+					logMessage(__FILE__, "Progress request failed, sending HTTP server error.");
+					return write_response(*conn, http_server_err(req));
+				} catch (const std::runtime_error& e) {
+					logMessage(__FILE__, std::string("Error during progress response: ") + e.what());
+					return write_response(*conn, http_server_err(req));
+				}
 			}
 
+			logMessage(__FILE__, "Progress request successful, sending response.");
 			http::response<http::string_body> res{http::status::ok, req.version()};
 			res.set(http::field::server, _env->http_server());
 			res.set(http::field::content_type, "application/json");
 			res.keep_alive(req.keep_alive());
-			res.body()=r.get();
+			res.body() = r.get();
 			res.prepare_payload();
 			return write_response(*conn, make_http_response(std::move(res)));
 		});
+
 		return {};
 	}
 
@@ -1927,7 +2002,6 @@ struct gapr::gather_server::PRIV {
 
 };
 
-
 gapr::gather_server::gather_server(Args&& args):
 	_args{std::move(args)},
 	_ptr{std::make_shared<PRIV>()}
@@ -1939,6 +2013,7 @@ int gapr::gather_server::run() { return _ptr->run(_args.host, _args.port); }
 void gapr::gather_server::emergency() { return _ptr->emergency(); }
 
 void gapr::gather_server::PRIV::update_state(const std::string& proj) {
+	logMessage(__FILE__, "Entered Update_State");
 	gapr::promise<gapr::mem_file> prom;
 	auto fut=prom.get_future();
 	auto model=_models.at(proj).model;
@@ -1966,6 +2041,7 @@ void gapr::gather_server::PRIV::update_state(const std::string& proj) {
 	});
 }
 void gapr::gather_server::PRIV::load_project(std::string&& proj) {
+	logMessage(__FILE__, "Loading Project ...");
 	gapr::promise<std::shared_ptr<gather_model>> prom;
 	auto fut=prom.get_future();
 	auto repo=_env->project_repo(proj);
@@ -1996,51 +2072,83 @@ void gapr::gather_server::PRIV::load_project(std::string&& proj) {
 }
 
 void gapr::gather_server::PRIV::do_accept() {
-	_acceptor.async_accept([this](bs_error_code ec, tcp::socket&& sock) mutable {
-		if(ec) {
-			gapr::print("accept err: ", ec.message());
-			return;
-		}
-		do_handshake(std::move(sock));
-		if(!_stop_signal.signal())
-			do_accept();
-	});
-}
-void gapr::gather_server::PRIV::do_handshake(tcp::socket&& sock) {
-	auto conn=std::make_shared<HttpConnection>(std::move(sock));
-	beast::async_detect_ssl(conn->sock, conn->buffer, [this,conn](bs_error_code ec, bool res) {
-		if(ec) {
-			gapr::print(1, "ssl detection err: ", ec.message());
-			return;
-		}
-		if(!res)
-			return redirect_to_ssl(*conn);
-		auto& ssl=conn->ssl.emplace(std::move(conn->sock), _ssl_ctx);
-		ssl.async_handshake(ssl.server, conn->buffer.cdata(), [this,conn](bs_error_code ec, std::size_t used) mutable {
-			if(ec) {
-				gapr::print(1, "handshake err: ", ec.message());
-				return;
-			}
-			if(conn->buffer.size()!=used) {
-				gapr::print(1, "handshake err: ", "lost buffer");
-				return;
-			}
-			conn->buffer.clear();
+    logMessage(__FILE__, "Starting do_accept...");
 
-			const unsigned char* alpn_str;
-			unsigned int alpn_len;
-			auto& ssl=*conn->ssl;
-			::SSL_get0_alpn_selected(ssl.native_handle(), &alpn_str, &alpn_len);
-			if(alpn_str && std::equal(alpn_str, alpn_str+alpn_len, &priv_proto[0], &priv_proto[sizeof(priv_proto)])) {
-				auto ses=std::make_shared<Session>();
-				std::shared_ptr<ssl::stream<tcp::socket>> ssl2{conn, &ssl};
-				add_session(*ses);
-				recv_request(*ses, gapr::server_end{std::move(ssl2)});
-			} else {
-				recv_request(*conn);
-			}
-		});
-	});
+    _acceptor.async_accept([this](bs_error_code ec, tcp::socket&& sock) mutable {
+        if(ec) {
+            logMessage(__FILE__, std::string("Error during accept: ") + ec.message());
+            gapr::print("accept err: ", ec.message());
+            return;
+        }
+
+        logMessage(__FILE__, "Connection accepted, proceeding with handshake.");
+        do_handshake(std::move(sock));
+
+        if (!_stop_signal.signal()) {
+            logMessage(__FILE__, "No stop signal, continuing to accept more connections.");
+            do_accept();
+        } else {
+            logMessage(__FILE__, "Stop signal received, no further accept calls.");
+        }
+    });
+}
+
+void gapr::gather_server::PRIV::do_handshake(tcp::socket&& sock) {
+    logMessage(__FILE__, "Starting handshake process.");
+
+    // Creating an HttpConnection
+    auto conn = std::make_shared<HttpConnection>(std::move(sock));
+
+    // Detecting if the connection is using SSL
+    beast::async_detect_ssl(conn->sock, conn->buffer, [this, conn](bs_error_code ec, bool res) {
+        if (ec) {
+            logMessage(__FILE__, std::string("SSL detection error: ") + ec.message());
+            gapr::print(1, "ssl detection err: ", ec.message());
+            return;
+        }
+
+        if (!res) {
+            logMessage(__FILE__, "No SSL detected, redirecting to plain HTTP.");
+            return redirect_to_ssl(*conn);
+        }
+
+        logMessage(__FILE__, "SSL detected, proceeding with handshake.");
+
+        // Performing the SSL handshake
+        auto& ssl = conn->ssl.emplace(std::move(conn->sock), _ssl_ctx);
+        ssl.async_handshake(ssl.server, conn->buffer.cdata(), [this, conn](bs_error_code ec, std::size_t used) mutable {
+            if (ec) {
+                logMessage(__FILE__, std::string("SSL handshake error: ") + ec.message());
+                gapr::print(1, "handshake err: ", ec.message());
+                return;
+            }
+
+            if (conn->buffer.size() != used) {
+                logMessage(__FILE__, "Handshake error: buffer mismatch after handshake.");
+                gapr::print(1, "handshake err: ", "lost buffer");
+                return;
+            }
+
+            logMessage(__FILE__, "Handshake successful, clearing buffer.");
+            conn->buffer.clear();
+
+            const unsigned char* alpn_str;
+            unsigned int alpn_len;
+            auto& ssl = *conn->ssl;
+            ::SSL_get0_alpn_selected(ssl.native_handle(), &alpn_str, &alpn_len);
+
+            if (alpn_str && std::equal(alpn_str, alpn_str + alpn_len, &priv_proto[0], &priv_proto[sizeof(priv_proto)])) {
+                logMessage(__FILE__, "ALPN protocol matched, creating session.");
+                auto ses = std::make_shared<Session>();
+                std::shared_ptr<ssl::stream<tcp::socket>> ssl2{conn, &ssl};
+                add_session(*ses);
+                recv_request(*ses, gapr::server_end{std::move(ssl2)});
+            } else {
+                logMessage(__FILE__, "No ALPN match, receiving request directly.");
+                recv_request(*conn);
+            }
+        });
+    });
 }
 
 void gapr::gather_server::PRIV::recv_request(Session& ses, gapr::server_end&& msg) {

@@ -49,7 +49,7 @@
 #include "../corelib/libc-wrappers.hh"
 #include "../corelib/windows-compat.hh"
 
-#include "logger.h"
+#include "./logger.h"
 
 /*! features
  * / fast coarse downsample for navigation

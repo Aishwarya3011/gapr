@@ -18,7 +18,7 @@
 #include "../corelib/windows-compat.hh"
 #include "../corelib/libc-wrappers.hh"
 
-#include "logger.h"
+#include "./logger.h"
 
 template<typename T>
 struct ds_slice {
@@ -271,107 +271,6 @@ struct dshelper_impl: dshelper {
 		}
 		return {curver, std::move(ret)};
 	}
-	/*
-	void writecache(const std::filesystem::path& path, bool first) const override {
-		fprintf(stderr, "Saving downsample...");
-		unsigned int dsd;
-		gapr::file_stream ofs;
-		if(first)
-			ofs={path, "wb"};
-		else
-			ofs={path, "r+b"};
-		if(!ofs)
-			throw std::runtime_error{"failed to open file"};
-		auto write_buf=[ofs=ofs.lower()](const void* p, std::size_t n) {
-			auto nn=std::fwrite(p, 1, n, ofs);
-			if(nn!=n)
-				throw std::runtime_error{"failed to write downsample"};
-		};
-
-		std::size_t toskip=0;
-		std::unique_lock lck{_mtx};
-		auto ver=_version.load();
-		write_buf(&ver, sizeof(ver));
-		dsd=ds_slices.size();
-		for(unsigned int z=0; z<dsd; ++z) {
-			auto slice=ds_slices[z].get();
-			std::unique_lock lck2{slice->mtx};
-			lck.unlock();
-
-			auto curoff=std::ftell(ofs);
-			if(curoff==-1)
-				throw std::runtime_error{"failed to ftell"};
-			if(slice->fileoff==0) {
-				slice->fileoff=curoff+toskip;
-			} else {
-				assert(slice->fileoff==curoff+toskip);
-			}
-			bool dirty=slice->dirty;
-			if(dirty || first) {
-				if(toskip>0) {
-					if(-1==std::fseek(ofs, toskip, SEEK_CUR))
-						throw std::runtime_error{"failed to fseek"};
-					toskip=0;
-				}
-				write_buf(slice->cnt.get(), sizeof(unsigned int)*dsw*dsh);
-				for(unsigned int i=0; i<spp && i<4; ++i) {
-					write_buf(slice->mip[i].get(), sizeof(T)*dsw*dsh);
-					write_buf(slice->sum[i].get(), sizeof(uint64_t)*dsw*dsh);
-				}
-				slice->dirty=false;
-			} else {
-				std::size_t per_pix=sizeof(unsigned int)+std::min(spp, (unsigned short)4)*(sizeof(T)+sizeof(uint64_t));
-				toskip+=dsw*dsh*per_pix;
-			}
-			lck2.unlock();
-			lck.lock();
-			unsigned int zz_start=z*dsz;
-			unsigned int zz_end=std::min(std::size_t{(z+1)*dsz}, visited_infos.size());
-			if(dirty || first || (z<fix_pads.size() && fix_pads[z])) {
-				if(toskip>0) {
-					if(-1==std::fseek(ofs, toskip, SEEK_CUR))
-						throw std::runtime_error{"failed to fseek"};
-					toskip=0;
-				}
-				for(auto zz=zz_start; zz<zz_end; ++zz) {
-					auto& info=visited_infos[zz];
-					write_buf(&info.len, sizeof(unsigned int));
-					write_buf(&info.nx, sizeof(unsigned int));
-					write_buf(&visited_data[info.idx], info.len);
-				}
-				if(std::fflush(ofs)!=0)
-					throw std::runtime_error{"failed to fflush"};
-			} else {
-				for(auto zz=zz_start; zz<zz_end; ++zz) {
-					auto& info=visited_infos[zz];
-					toskip+=sizeof(unsigned int)*2+info.len;
-				}
-			}
-		}
-		lck.unlock();
-		auto fd=::fileno(ofs);
-		if(-1==::fsync(fd))
-			throw std::runtime_error{"failed to sync data"};
-		hint_discard_cache(ofs);
-		if(!ofs.close())
-			throw std::runtime_error{"failed to close downsample"};
-		// if(first) {
-		// 	gapr::file_stream dir{path.parent_path(), "r"};
-		// 	if(-1==::fdatasync(::fileno(dir)))
-		// 		throw std::runtime_error{"failed to sync dir"};
-		// }
-		if(first) {
-			gapr::file_stream dir{path.parent_path(), "r"};
-			if (!dir) {
-				throw std::runtime_error{"failed to open directory for syncing"};
-			}
-			if(-1 == ::fsync(::fileno(dir))) {
-				throw std::runtime_error{"failed to sync dir"};
-			}
-		}
-		fprintf(stderr, "   DONE\n");
-	}
-	*/
 
 	void writecache(const std::filesystem::path& path, bool first) const override {
 		Logger::instance().logMessage(__FILE__, "Saving downsample...");
@@ -504,81 +403,6 @@ struct dshelper_impl: dshelper {
 		slice->dirty=true;
 		slice->_initialized=true;
 	}
-	/*
-	void loadcache(const std::filesystem::path& path, unsigned int depth) override {
-		assert(_initialized);
-		gapr::file_stream ofs{path, "rb"};
-		if(!ofs)
-			throw std::runtime_error{"failed to open file"};
-		// auto read_buf=[ofs=ofs.lower()](void* p, std::size_t n) {
-		// 	auto nn=std::fread(p, 1, n, ofs);
-		// 	if(nn!=n)
-		// 		throw std::runtime_error{"failed to read downsample"};
-		// };
-		Logger::instance().logMessage(__FILE__, "Starting to read downsample data.");
-
-		auto read_buf=[ofs=ofs.lower()](void* p, std::size_t n) {
-			auto nn = std::fread(p, 1, n, ofs);
-			if(nn != n) {
-				Logger::instance().logMessage(__FILE__, "Failed to read downsample. Expected size: " + std::to_string(n) + ", but got: " + std::to_string(nn));
-				throw std::runtime_error{"failed to read downsample"};
-			}
-		};
-
-		Logger::instance().logMessage(__FILE__, "Finished reading downsample data.");
-		unsigned int dsd=(depth+dsz-1)/dsz;
-
-		hint_sequential_read(ofs);
-		std::unique_lock lck{_mtx};
-		uint64_t ver;
-		read_buf(&ver, sizeof(ver));
-		_version.store(ver);
-		for(unsigned int z=0; z<dsd; ++z) {
-			auto slice=gen_slice(z);
-			std::unique_lock lck2{slice->mtx};
-			lck.unlock();
-
-			if(!slice->_initialized)
-				init_slice(slice);
-			auto curoff=std::ftell(ofs);
-			if(curoff==-1)
-				throw std::runtime_error{"failed to ftell"};
-			if(slice->fileoff==0) {
-				slice->fileoff=curoff;
-			} else {
-				assert(slice->fileoff==static_cast<std::size_t>(curoff));
-			}
-			{
-				read_buf(slice->cnt.get(), sizeof(unsigned int)*dsw*dsh);
-				for(unsigned int i=0; i<spp && i<4; ++i) {
-					read_buf(slice->mip[i].get(), sizeof(T)*dsw*dsh);
-					read_buf(slice->sum[i].get(), sizeof(uint64_t)*dsw*dsh);
-				}
-				slice->dirty=false;
-			}
-			lck2.unlock();
-
-			lck.lock();
-			unsigned int zz_start=z*dsz;
-			unsigned int zz_end=std::min((z+1)*dsz, depth);
-			for(auto zz=zz_start; zz<zz_end; ++zz) {
-				while(visited_infos.size()<=zz)
-					visited_infos.emplace_back();
-				auto& info=visited_infos[zz];
-				assert(info.nx==0);
-				read_buf(&info.len, sizeof(unsigned int));
-				read_buf(&info.nx, sizeof(unsigned int));
-				auto idx=visited_data.size();
-				visited_data.resize(idx+info.len, 0);
-				read_buf(&visited_data[idx], info.len);
-				info.idx=idx;
-				info.dirty=false;
-			}
-		}
-		lck.unlock();
-		hint_discard_cache(ofs);
-	}
-	*/
 
 	void loadcache(const std::filesystem::path& path, unsigned int depth) override {
 		Logger::instance().logMessage(__FILE__, "Attempting to load cache.");
